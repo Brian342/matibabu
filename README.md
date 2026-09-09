@@ -1,276 +1,466 @@
-Matibabu
-
-Matibabu is a modular healthcare information system for managing patient registration and clinical encounters. The project is being developed with a Java/Spring Boot backend and a Next.js web frontend, with the backend designed around Clean Architecture principles.
-
-The system is designed to keep core healthcare domain logic independent from frameworks, databases, and transport layers, allowing the persistence and delivery mechanisms to evolve without rewriting the underlying domain.
-
-«Status: Active development. Patient registration and retrieval are currently implemented. Additional clinical, authentication, and synchronization capabilities are planned.»
-
-What is currently implemented
-
-Patient Registry
-
-- Register patients through a REST API.
-- Retrieve individual patients by UUID.
-- Validate and map API requests through DTOs.
-- Persist patient data using JPA/Hibernate.
-- Manage database schema changes through Flyway migrations.
-- Support SQLite for local development.
-- PostgreSQL is the target database for remote/production deployments.
-
-Encounters
-
-The core "Encounter" domain model and repository are in place. HTTP endpoints for encounters have not yet been exposed.
-
-Roadmap
-
-Planned functionality includes:
-
-- Medical records and clinical data
-- Encounter management APIs
-- Authentication and authorization
-- Offline/online synchronization
-- DHIS2 integration
-- Expanded patient management
-- Production deployment and operational tooling
-
-Tech Stack
-
-Backend
-
-- Java 25
-- Spring Boot 4.1.0
-- Spring Data JPA / Hibernate
-- Spring Security
-- SQLite — local development
-- PostgreSQL — target remote/production database
-- Flyway — database migrations
-- MapStruct — DTO/entity mapping
-- UUID v7 — entity identifiers
-- Maven — build and dependency management
-
-Frontend
+# Matibabu Offline-First EMR Lite
+
+Matibabu is an offline-first Electronic Medical Record (EMR) system for managing patient and clinical data in environments where connectivity may be unreliable.
+
+The system is being developed as a full-stack application with a frontend client and a Java/Spring Boot backend.
+
+## Architecture
+
+```text
+                    ┌─────────────────────┐
+                    │      Frontend       │
+                    │                     │
+                    │  Patient workflows  │
+                    │  Encounter workflows│
+                    │  Clinical workflows │
+                    └──────────┬──────────┘
+                               │
+                           REST API
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │       Backend       │
+                    │                     │
+                    │       API           │
+                    │    Application      │
+                    │      Domain         │
+                    │   Infrastructure    │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Local Database    │
+                    │       SQLite        │
+                    └──────────┬──────────┘
+                               │
+                         Synchronization
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Remote Database   │
+                    └──────────┬──────────┘
+                               │
+                        DHIS2 Integration
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │       DHIS2         │
+                    └─────────────────────┘
+```
+
+## Backend Architecture
+
+The backend follows Clean Architecture and Domain-Driven Design principles.
+
+```text
+backend/
+├── api/
+├── application/
+├── domain/
+└── infrastructure/
+    └── persistence/
+```
+
+### Responsibilities
+
+**API**
+
+Handles HTTP requests, responses, validation, and API-level exception handling.
+
+**Application**
+
+Implements use cases and coordinates domain objects with repository abstractions.
+
+**Domain**
+
+Contains entities, value concepts, business rules, state transitions, and repository interfaces.
 
-- Next.js 16 — App Router
-- React 19
-- TypeScript 5
-- Tailwind CSS 4
+**Infrastructure**
 
-Project Structure
+Contains persistence implementations, JPA entities, MapStruct mappers, Spring Data repositories, and database configuration.
 
-matibabu/
-├── backend/
-│   ├── src/main/java/com/matibabu/backend/
-│   │   ├── api/              # HTTP controllers and DTOs
-│   │   ├── application/      # Use cases and application services
-│   │   ├── config/           # Spring configuration and bean composition
-│   │   ├── domain/           # Domain models and repository interfaces
-│   │   └── infrastructure/   # Persistence adapters and JPA entities
-│   │
-│   └── src/main/resources/
-│       ├── application*.properties
-│       └── db/migration/     # Flyway database migrations
-│
-├── frontend/
-│   ├── src/app/              # Next.js App Router
-│   ├── src/components/       # Reusable UI components
-│   ├── src/lib/api/          # Backend API clients
-│   └── src/types/            # TypeScript types
-│
-├── database/                 # Local/shared database files
-├── docs/
-│   ├── architecture/         # Architecture documentation
-│   └── decisions/            # Architecture Decision Records
-│
-└── README.md
+The domain does not depend on Spring or persistence implementation details.
 
-Architecture
+---
 
-The backend follows a Clean Architecture approach. Dependencies point inward toward the domain rather than allowing the domain to depend on frameworks or infrastructure.
+## Technology Stack
 
-┌──────────────────────────────┐
-│       API / Controllers      │
-│       HTTP + DTOs            │
-└──────────────┬───────────────┘
-               │
-               ▼
-┌──────────────────────────────┐
-│      Application Layer       │
-│    Use Cases + Services      │
-└──────────────┬───────────────┘
-               │
-               ▼
-┌──────────────────────────────┐
-│         Domain Layer         │
-│ Models + Repository Ports    │
-└──────────────▲───────────────┘
-               │
-               │
-┌──────────────┴───────────────┐
-│      Infrastructure          │
-│ JPA + Database + Adapters    │
-└──────────────────────────────┘
+### Backend
 
-The domain layer has no direct knowledge of Spring, JPA, HTTP, or the database implementation.
+* Java
+* Spring Boot
+* Spring Web
+* Spring Security
+* Spring Data JPA
+* Hibernate
+* MapStruct
+* Flyway
+* SQLite
+* PostgreSQL
+* Maven
+* JUnit
 
-Additional architectural documentation and ADRs are available under "docs/".
+### Development & Testing
 
-Getting Started
+* IntelliJ IDEA
+* Apidog
+* GitHub Actions
 
-Prerequisites
+### Integration
 
-- JDK 25
-- Node.js 22+
-- npm
-- A web browser or HTTP client such as "curl" or Postman
+* DHIS2
 
-The Maven wrapper is included in the repository.
+---
 
-Start the Backend
+# Implemented Functionality
 
-cd backend
-./mvnw spring-boot:run
+## Patient Management
 
-The backend starts on:
+Implemented:
 
-http://localhost:8080
+* Patient registration
+* Patient retrieval
+* Patient listing
+* Patient update
+* Patient deletion
+* Patient search by phone number
+* Duplicate phone-number validation
 
-Start the Frontend
+### API
 
-Start the backend first, then:
+```text
+POST   /api/patients
+GET    /api/patients/{id}
+GET    /api/patients
+PUT    /api/patients/{id}
+DELETE /api/patients/{id}
+GET    /api/patients/search
+GET    /api/patients/phone/{phoneNumber}
+```
 
-cd frontend
-npm install
-npm run dev
+---
 
-The frontend starts on:
+## Encounter Management
 
-http://localhost:3000
+An encounter represents a clinical interaction between a patient and the healthcare facility.
 
-Configuration
+Current lifecycle:
 
-The default active Spring profile is "local".
+```text
+ACTIVE
+  ├── DISCHARGED
+  └── CANCELLED
+```
 
-The local configuration:
+Implemented:
 
-- Uses SQLite for development.
-- Stores the local database in "./matibabu-local.db".
-- Runs Flyway migrations automatically.
-- Enables SQL logging for development.
+* Encounter creation
+* Encounter retrieval
+* Discharge
+* Cancellation
+* Lifecycle validation
+* Prevention of operations on inactive encounters
+* Validation of encounter timestamps
 
-For a remote/production environment, configure the "prod" profile with the appropriate PostgreSQL connection details.
+### API
 
-API
+```text
+POST /api/encounters/{patientId}
+GET  /api/encounters/{id}
 
-Base URL:
+POST /api/encounters/{id}/discharge
+POST /api/encounters/{id}/cancel
+```
 
-http://localhost:8080
+Encounter identifiers use UUIDv7/time-ordered UUIDs.
 
-Patient Registry
+---
 
-Method| Endpoint| Status| Description
-"POST"| "/api/patients"| ✅ Implemented| Register a patient
-"GET"| "/api/patients/{id}"| ✅ Implemented| Retrieve a patient by UUID
-"GET"| "/api/patients?page=0&size=20"| 🚧 Planned| List patients
-"PUT"| "/api/patients/{id}"| 🚧 Planned| Update a patient
-"DELETE"| "/api/patients/{id}"| 🚧 Planned| Delete/archive a patient
+## Medical Records
 
-Register a Patient
+A medical record belongs to an encounter.
 
-curl -X POST http://localhost:8080/api/patients \
-  -H "Content-Type: application/json" \
-  -d '{
-    "firstName": "John",
-    "lastName": "Kamau",
-    "dateOfBirth": "1995-06-15",
-    "phoneNumber": "+254712345678",
-    "gender": "MALE"
-  }'
+```text
+Patient
+   │
+   └── Encounter
+          │
+          └── Medical Record
+```
 
-Example response:
+Implemented:
 
-{
-  "id": "019185c3-...",
-  "firstName": "John",
-  "lastName": "Kamau",
-  "dateOfBirth": "1995-06-15",
-  "phoneNumber": "+254712345678",
-  "createdAt": "2026-08-22T04:20:49.743Z",
-  "gender": "MALE"
-}
+* Medical record creation
+* Medical record retrieval by encounter
+* Encounter validation
+* Patient association derived from the encounter
+* One medical record per encounter
 
-Retrieve a Patient
+### API
 
-curl http://localhost:8080/api/patients/{id}
+```text
+POST /api/encounters/{encounterId}/medical-record
+GET  /api/encounters/{encounterId}/medical-record
+```
 
-The endpoint returns "200 OK" when the patient exists and "404 Not Found" when the supplied UUID cannot be found.
+The database enforces the one-record-per-encounter constraint.
 
-Gender Values
+---
 
-The API currently accepts:
+## Clinical Data
 
-- "MALE"
-- "FEMALE"
-- "OTHER"
-- "UNKNOWN"
+Clinical information is represented as separate domain concepts:
 
-Database Migrations
+```text
+Medical Record
+├── Vitals
+├── Clinical Observations
+├── Diagnoses
+└── Treatments
+```
 
-Flyway migrations are located at:
+### Vitals
 
-backend/src/main/resources/db/migration/
+Supported types:
 
-Current migrations include:
+```text
+TEMPERATURE
+BLOOD_PRESSURE
+HEART_RATE
+RESPIRATORY_RATE
+OXYGEN_SATURATION
+WEIGHT
+HEIGHT
+```
 
-V1__create_patients_table.sql
-V2__create_encounters_table.sql
-V3__add_patient_details.sql
-V4__add_encounter_created_at.sql
-V5__rename_residence_to_address.sql
+### Diagnoses
 
-Migrations are applied automatically when the application starts.
+Supported types:
 
-Frontend Development Notes
+```text
+SUSPECTED
+CONFIRMED
+DIFFERENTIAL
+```
 
-The frontend currently consumes only the API functionality that has been implemented.
+Clinical data persistence is implemented using relational child tables:
 
-Important API/domain considerations:
+```text
+medical_record_vitals
+medical_record_observations
+medical_record_diagnoses
+medical_record_treatments
+```
 
-1. The current API uses "gender" and "phoneNumber".
-2. Some fields present in the database schema are not yet exposed through the patient API.
-3. The "Encounter" domain model exists, but there are currently no HTTP endpoints for encounters.
-4. The local backend permits requests from "http://localhost:3000".
-5. If the frontend origin changes, update the CORS configuration in:
+Each clinical entry references its parent medical record through a foreign key.
 
-backend/src/main/java/com/matibabu/backend/config/WebConfiguration.java
+---
 
-6. Authentication and authorization have not yet been implemented.
+# Authentication
 
-Testing
+Authentication is implemented using Spring Security and session-based authentication.
 
-Run the backend test suite with:
+The database includes clinician and Spring Session persistence.
 
-cd backend
-./mvnw test
+Initial administrator provisioning is handled through a versioned Flyway migration.
 
-The application can also be packaged with:
+---
 
-./mvnw package
+# Persistence
 
-Build Verification
+Database schema evolution is managed with Flyway.
 
-The application has been verified locally by packaging and running the generated JAR:
+The current schema includes:
 
-cd backend
-./mvnw package -DskipTests
-java -jar target/backend-0.0.1-SNAPSHOT.jar
+```text
+patients
+encounters
+medicalrecords
 
-Development Status
+medical_record_vitals
+medical_record_observations
+medical_record_diagnoses
+medical_record_treatments
 
-Matibabu is an active software-engineering project. The current implementation focuses on establishing the backend architecture, persistence layer, database migrations, and initial patient-registry functionality before expanding into additional healthcare modules.
+clinicians
 
-The project intentionally documents functionality that is not yet implemented rather than presenting planned features as completed.
+SPRING_SESSION
+SPRING_SESSION_ATTRIBUTES
+```
 
-License
+The application currently uses SQLite for local/offline persistence, with PostgreSQL supported for remote/server-based persistence.
 
-See ""LICENSE"" (LICENSE) for licensing information.
+---
+
+# Testing
+
+Automated tests cover the implemented domain, application, and persistence behavior.
+
+Testing includes:
+
+* Patient operations
+* Encounter lifecycle
+* Medical record operations
+* Domain validation
+* Repository behavior
+* Error scenarios
+* Persistence constraints
+
+API behavior is additionally verified through Apidog.
+
+The current automated test suite is passing.
+
+---
+
+# Error Handling
+
+Application and domain exceptions are handled centrally using `@RestControllerAdvice`.
+
+The API currently handles cases including:
+
+```text
+404 NOT FOUND
+409 CONFLICT
+400 BAD REQUEST
+```
+
+Examples include:
+
+* Patient not found
+* Encounter not found
+* Medical record not found
+* Duplicate patient phone number
+* Invalid encounter state
+* Database integrity conflicts
+* Invalid request parameters
+
+---
+
+# Development Status
+
+| Component                       | Status     |
+| ------------------------------- | ---------- |
+| Project architecture            | ✅          |
+| Patient management              | ✅          |
+| Encounter management            | ✅          |
+| Encounter lifecycle             | ✅          |
+| Medical records                 | ✅          |
+| Clinical data model             | ✅          |
+| Clinical data persistence       | ✅          |
+| Local database                  | ✅          |
+| Database migrations             | ✅          |
+| Authentication                  | ✅          |
+| Exception handling              | ✅          |
+| Automated tests                 | ✅          |
+| API testing                     | ✅          |
+| Frontend                        | 🚧         |
+| Remote database synchronization | ⏭️ Next    |
+| DHIS2 integration               | ⏭️ Planned |
+
+---
+
+# Current Workflow
+
+The implemented clinical workflow is:
+
+```text
+Patient
+   ↓
+Encounter
+   ↓
+Medical Record
+   ↓
+Clinical Data
+   ├── Vital
+   ├── Observation
+   ├── Diagnosis
+   └── Treatment
+```
+
+The next system-level workflow is:
+
+```text
+Local Database
+      ↓
+Synchronization
+      ↓
+Remote Database
+      ↓
+DHIS2
+```
+
+---
+
+# Roadmap
+
+## 1. Remote Database Synchronization
+
+The next major implementation phase is synchronization between the local database and the remote database.
+
+Key concerns include:
+
+* Change detection
+* Sync state
+* Conflict handling
+* Retry behavior
+* Idempotency
+* Connectivity recovery
+* Data consistency
+
+## 2. DHIS2 Integration
+
+After establishing reliable remote synchronization, Matibabu will integrate with DHIS2 for the required health-information workflows.
+
+The integration will define:
+
+* Data mappings
+* DHIS2 API interaction
+* Synchronization boundaries
+* Failure handling
+* Retry behavior
+* Idempotency
+* Reporting requirements
+
+---
+
+# Architectural Decisions
+
+Significant architectural decisions are documented through ADRs.
+
+Current ADRs include:
+
+* **ADR-001 — architecture decisions**
+* **ADR-01 — Encounters**
+* **ADR-02- did web authentication**
+* **ADR-03- github issues**
+* **ADR-04- update on status**
+* **ADR-05- Medical records**
+* **ADR-07- summary**
+
+ADRs are used for decisions that affect the architecture, boundaries, or development process rather than documenting routine implementation details.
+
+---
+
+# Development Guidelines
+
+When extending the system:
+
+1. Keep business rules in the domain.
+2. Keep use-case orchestration in the application layer.
+3. Keep HTTP concerns in the API layer.
+4. Keep persistence concerns in infrastructure.
+5. Define repository abstractions independently of persistence technology.
+6. Use database constraints for data integrity.
+7. Add automated tests for new behavior.
+8. Use ADRs for significant architectural decisions.
+9. Verify API behavior independently of unit tests.
+
+---
+
+## Project Status
+
+**Current milestone:** Core clinical workflow implemented.
+
+**Next milestone:** Local-to-remote database synchronization.
+
+**Following milestone:** DHIS2 integration.
