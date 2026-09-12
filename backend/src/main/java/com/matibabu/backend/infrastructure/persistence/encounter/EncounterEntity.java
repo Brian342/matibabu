@@ -18,6 +18,9 @@ public class EncounterEntity {
     @JdbcTypeCode(SqlTypes.CHAR)
     private UUID patientId;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID attendingClinicianId;
+
     private Instant startedAt;
 
     @Enumerated(EnumType.STRING)
@@ -37,6 +40,10 @@ public class EncounterEntity {
     }
     public void setPatientId(UUID patientId) {
         this.patientId = patientId;
+    }
+
+    public void setAttendingClinicianId(UUID attendingClinicianId) {
+        this.attendingClinicianId = attendingClinicianId;
     }
 
     public void setStartedAt(Instant startedAt) {
@@ -59,6 +66,10 @@ public class EncounterEntity {
 
     public UUID getPatientId() {
         return patientId;
+    }
+
+    public UUID getAttendingClinicianId() {
+        return attendingClinicianId;
     }
 
     public EncounterStatus getStatus() {

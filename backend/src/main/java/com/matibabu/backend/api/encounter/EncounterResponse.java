@@ -9,6 +9,7 @@ import java.util.UUID;
 public record EncounterResponse(
         UUID id,
         UUID patientId,
+        UUID attendingClinicianId,
         Instant startedAt,
         EncounterStatus status,
         Instant endedAt
@@ -18,6 +19,7 @@ public record EncounterResponse(
         return new EncounterResponse(
                 encounter.getId(),
                 encounter.getPatientId(),
+                encounter.getAttendingClinicianId(),
                 encounter.getStartedAt(),
                 encounter.getStatus(),
                 encounter.getEndedAt()

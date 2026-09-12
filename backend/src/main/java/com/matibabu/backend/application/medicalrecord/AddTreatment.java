@@ -18,16 +18,31 @@ public class AddTreatment {
 
     public MedicalRecord execute(
             UUID medicalRecordId,
-            String description
+            UUID medicineId,
+            UUID prescribedByClinicianId,
+            String dose,
+            String doseUnit,
+            String route,
+            String frequency,
+            Integer durationDays,
+            String notes
     ) {
-        MedicalRecord medicalRecord = medicalRecordRepository.findById(medicalRecordId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Medical record not found: " + medicalRecordId
-                ));
+        MedicalRecord medicalRecord =
+                medicalRecordRepository.findById(medicalRecordId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Medical record not found: " + medicalRecordId
+                        ));
 
         Treatment treatment = new Treatment(
                 medicalRecordId,
-                description
+                medicineId,
+                prescribedByClinicianId,
+                dose,
+                doseUnit,
+                route,
+                frequency,
+                durationDays,
+                notes
         );
 
         medicalRecord.addTreatment(treatment);

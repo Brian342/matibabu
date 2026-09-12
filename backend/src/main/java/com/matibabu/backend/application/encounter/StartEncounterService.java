@@ -6,9 +6,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.UUID;
+
 @Service
 public class StartEncounterService implements StartEncounterUseCase {
-    //must call EncounterRepository for storage access
+
+    // Repository handles persistence.
+    // The Encounter domain object handles the business rules.
     private final EncounterRepository encounterRepository;
 
     public StartEncounterService(EncounterRepository encounterRepository) {
@@ -16,9 +19,13 @@ public class StartEncounterService implements StartEncounterUseCase {
     }
 
     @Override
-    //domain Encounter class handles the business logic of starting an encounter
-    public Encounter start(UUID patientId, Instant now) {
-        Encounter encounter = Encounter.start(patientId, now);
+    public Encounter start(
+            UUID patientId,
+            UUID attendingClinicianId,
+            Instant now
+    ) {
+        Encounter encounter =
+                Encounter.start(patientId, attendingClinicianId, now);
 
         return encounterRepository.save(encounter);
     }

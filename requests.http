@@ -279,8 +279,24 @@ X-XSRF-TOKEN: {{csrfToken}}
 
 ### POST Add Treatment to Medical Record
 ### Login + CSRF Required
-POST http://localhost:8080/api/encounters/{{encounterId}}/medical-record/treatments?description={{treatment}}
+### The prescribing clinician is taken from the logged-in session,
+### not from this body.
+POST http://localhost:8080/api/encounters/{{encounterId}}/medical-record/treatments
 X-XSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "medicineId": "{{medicineId}}",
+  "dose": "500",
+  "doseUnit": "mg",
+  "route": "oral",
+  "frequency": "TID",
+  "durationDays": 5,
+  "notes": null
+}
+
+### GET Search Medicines catalog
+GET http://localhost:8080/api/medicines?query=amox
 
 
 ### ============================================================
@@ -323,8 +339,13 @@ X-XSRF-TOKEN: {{csrfToken}}
 
 ### POST Add Treatment to an Encounter without a Medical Record
 ### Expected: 404 Not Found
-POST http://localhost:8080/api/encounters/{{encounterWithoutMedicalRecordId}}/medical-record/treatments?description={{treatment}}
+POST http://localhost:8080/api/encounters/{{encounterWithoutMedicalRecordId}}/medical-record/treatments
 X-XSRF-TOKEN: {{csrfToken}}
+Content-Type: application/json
+
+{
+  "notes": "{{treatment}}"
+}
 
 
 ### ============================================================

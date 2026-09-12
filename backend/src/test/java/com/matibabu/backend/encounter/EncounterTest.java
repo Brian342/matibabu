@@ -25,11 +25,14 @@ class EncounterTest {
     @Test
     void shouldStartAsActive() {
         UUID patientId = UUID.randomUUID();
+
+        UUID attendingClinicianId =
+                UUID.randomUUID();
         Instant now = Instant.now();
 
         // Start a new encounter for the patient.
         Encounter encounter =
-                Encounter.start(patientId, now);
+                Encounter.start(patientId, attendingClinicianId, now);
 
         // The domain should generate an ID for the new encounter.
         assertNotNull(encounter.getId());
@@ -63,6 +66,9 @@ class EncounterTest {
     void shouldDischargeActiveEncounter() {
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -71,7 +77,7 @@ class EncounterTest {
 
         // Create an active encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Perform the domain operation.
         encounter.discharge(dischargedAt);
@@ -102,6 +108,9 @@ class EncounterTest {
     void shouldCancelActiveEncounter() {
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -110,7 +119,7 @@ class EncounterTest {
 
         // Create an active encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Cancel the encounter.
         encounter.cancel(cancelledAt);
@@ -143,6 +152,9 @@ class EncounterTest {
     void shouldNotDischargeAlreadyDischargedEncounter() {
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -151,7 +163,7 @@ class EncounterTest {
 
         // Start the encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Discharge it once.
         encounter.discharge(dischargedAt);
@@ -180,6 +192,9 @@ class EncounterTest {
     void shouldNotCancelDischargedEncounter() {
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -188,7 +203,7 @@ class EncounterTest {
 
         // Create the encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Move the encounter into its terminal DISCHARGED state.
         encounter.discharge(dischargedAt);
@@ -210,6 +225,9 @@ class EncounterTest {
     void shouldNotAllowEndTimeBeforeStartTime() {
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T12:00:00Z");
 
@@ -218,7 +236,7 @@ class EncounterTest {
 
         // Create the encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Attempt to discharge using a time before the encounter started.
         assertThrows(

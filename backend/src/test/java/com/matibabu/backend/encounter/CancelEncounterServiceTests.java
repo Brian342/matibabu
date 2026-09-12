@@ -53,6 +53,9 @@ class CancelEncounterServiceTest {
 
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-20T10:00:00Z");
 
@@ -64,7 +67,7 @@ class CancelEncounterServiceTest {
 
         // Create an active encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Persist it before executing the use case.
         repository.save(encounter);

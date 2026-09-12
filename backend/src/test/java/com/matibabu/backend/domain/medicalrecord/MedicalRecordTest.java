@@ -154,6 +154,13 @@ class MedicalRecordTest {
         Treatment treatment =
                 new Treatment(
                         medicalRecord.getId(),
+                        null,
+                        UUID.randomUUID(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
                         "Prescribed medication"
                 );
 

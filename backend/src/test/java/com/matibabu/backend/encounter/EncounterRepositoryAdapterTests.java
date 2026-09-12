@@ -38,12 +38,15 @@ class EncounterRepositoryAdapterTests {
 
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-21T08:00:00Z");
 
         // Create a domain Encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Save through the DOMAIN repository interface.
         Encounter saved =

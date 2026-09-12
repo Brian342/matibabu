@@ -16,11 +16,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class StartEncounterServiceTest {
 
+
     /*
      * Simple in-memory implementation of EncounterRepository.
      *
      * This allows us to test the application service without
-     * connecting to a DB.
+     * connecting to a database.
      */
     private static class InMemoryEncounterRepository
             implements EncounterRepository {
@@ -45,14 +46,16 @@ class StartEncounterServiceTest {
      * 1. Creates an Encounter.
      * 2. Generates an ID.
      * 3. Associates it with the correct patient.
-     * 4. Starts it as ACTIVE.
-     * 5. Preserves the supplied start time.
-     * 6. Saves it through the repository.
+     * 4. Associates it with the correct attending clinician.
+     * 5. Starts it as ACTIVE.
+     * 6. Preserves the supplied start time.
+     * 7. Saves it through the repository.
      */
     @Test
     void shouldStartAndSaveEncounter() {
 
         UUID patientId = UUID.randomUUID();
+        UUID attendingClinicianId = UUID.randomUUID();
 
         Instant startedAt =
                 Instant.parse("2026-08-20T10:00:00Z");
@@ -67,13 +70,26 @@ class StartEncounterServiceTest {
 
         // Execute the start encounter use case.
         Encounter encounter =
-                service.start(patientId, startedAt);
+                service.start(
+                        patientId,
+                        attendingClinicianId,
+                        startedAt
+                );
 
         // The encounter should have a generated ID.
         assertNotNull(encounter.getId());
 
         // The correct patient should be associated with the encounter.
-        assertEquals(patientId, encounter.getPatientId());
+        assertEquals(
+                patientId,
+                encounter.getPatientId()
+        );
+
+        // The correct clinician should be associated with the encounter.
+        assertEquals(
+                attendingClinicianId,
+                encounter.getAttendingClinicianId()
+        );
 
         // The encounter should start as ACTIVE.
         assertEquals(
@@ -100,4 +116,6 @@ class StartEncounterServiceTest {
                 savedEncounter.getId()
         );
     }
+
+
 }

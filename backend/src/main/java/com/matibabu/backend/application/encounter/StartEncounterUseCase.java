@@ -7,5 +7,9 @@ import java.util.UUID;
 
 public interface StartEncounterUseCase {
 
-    Encounter start(UUID patientId, Instant now);
+    Encounter start(
+            UUID patientId,
+            UUID attendingClinicianId,
+            Instant now
+    );
 }

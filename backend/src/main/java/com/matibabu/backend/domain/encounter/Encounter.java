@@ -12,6 +12,10 @@ public class Encounter {
     private final UUID patientId;
     private final Instant startedAt;
 
+    // The clinician who attended/performed this encounter.
+    // Nullable only for encounters recorded before this field existed
+    // (see reconstitute); every newly started encounter requires one.
+    private UUID attendingClinicianId;
 
     private EncounterStatus status;
     private Instant endedAt;
@@ -30,14 +34,19 @@ public class Encounter {
         this.status = EncounterStatus.ACTIVE;
         this.endedAt = null;
     }
-  //start an encounter
-    public static Encounter start( UUID patientId, Instant now) {
+    //start an encounter
+    public static Encounter start(UUID patientId, UUID attendingClinicianId, Instant now) {
         UUID encounterId = UuidCreator.getTimeOrderedEpoch();
-        return new Encounter(
+        Encounter encounter = new Encounter(
                 encounterId,
                 patientId,
                 now
         );
+        encounter.attendingClinicianId = Objects.requireNonNull(
+                attendingClinicianId,
+                "An encounter must record which clinician is attending"
+        );
+        return encounter;
     }
     //discharge an encounter
     public void discharge(Instant now) {
@@ -78,13 +87,17 @@ public class Encounter {
             );
         }
     }
-//getters
+    //getters
     public UUID getId() {
         return id;
     }
 
     public UUID getPatientId() {
         return patientId;
+    }
+
+    public UUID getAttendingClinicianId() {
+        return attendingClinicianId;
     }
 
     public EncounterStatus getStatus() {
@@ -98,15 +111,17 @@ public class Encounter {
     public Instant getEndedAt() {
         return endedAt;
     }
- //if an encounter exists, reconstitute using existing data
+    //if an encounter exists, reconstitute using existing data
     public static Encounter reconstitute(
             UUID id,
             UUID patientId,
+            UUID attendingClinicianId,
             Instant startedAt,
             EncounterStatus status,
             Instant endedAt
     ) {
         Encounter encounter = new Encounter(id, patientId, startedAt);
+        encounter.attendingClinicianId = attendingClinicianId;
         encounter.status = status;
         encounter.endedAt = endedAt;
         return encounter;

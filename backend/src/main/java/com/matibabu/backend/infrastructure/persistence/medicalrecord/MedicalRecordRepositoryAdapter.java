@@ -3,6 +3,7 @@ package com.matibabu.backend.infrastructure.persistence.medicalrecord;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecord;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecordRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,37 +13,76 @@ import java.util.UUID;
 public class MedicalRecordRepositoryAdapter implements MedicalRecordRepository {
 
     private final SpringDataMedicalRecordsRepository jpaRepository;
+    private final SpringDataTreatmentsRepository treatmentsRepository;
     private final MedicalRecordMapper mapper;
+    private final TreatmentMapper treatmentMapper;
 
-    public MedicalRecordRepositoryAdapter(SpringDataMedicalRecordsRepository jpaRepository,
-                                          MedicalRecordMapper mapper) {
+    public MedicalRecordRepositoryAdapter(
+            SpringDataMedicalRecordsRepository jpaRepository,
+            SpringDataTreatmentsRepository treatmentsRepository,
+            MedicalRecordMapper mapper,
+            TreatmentMapper treatmentMapper
+    ) {
         this.jpaRepository = jpaRepository;
+        this.treatmentsRepository = treatmentsRepository;
         this.mapper = mapper;
+        this.treatmentMapper = treatmentMapper;
     }
 
     @Override
+    @Transactional
     public MedicalRecord save(MedicalRecord medicalRecord) {
         MedicalRecordEntity entity = mapper.toEntity(medicalRecord);
         MedicalRecordEntity savedEntity = jpaRepository.save(entity);
-        return mapper.toDomain(savedEntity);
+
+        // Treatments are re-synced in full on every save. This keeps the
+        // aggregate's persistence simple and correct at the current
+        // volume (a handful of treatments per record); if that becomes
+        // a bottleneck, switch to diffing/updating individual rows.
+        treatmentsRepository.deleteByMedicalRecordId(medicalRecord.getId());
+        List<TreatmentEntity> treatmentEntities = medicalRecord.getTreatments().stream()
+                .map(treatmentMapper::toEntity)
+                .toList();
+        treatmentsRepository.saveAll(treatmentEntities);
+
+        return hydrate(savedEntity);
     }
 
     @Override
     public Optional<MedicalRecord> findById(UUID id) {
         return jpaRepository.findById(id)
-                .map(mapper::toDomain);
+                .map(this::hydrate);
     }
 
     @Override
     public List<MedicalRecord> findByPatientId(UUID patientId) {
         return jpaRepository.findByPatientId(patientId).stream()
-                .map(mapper::toDomain)
+                .map(this::hydrate)
                 .toList();
     }
 
     @Override
     public Optional<MedicalRecord> findByEncounterId(UUID encounterId) {
         return jpaRepository.findByEncounterId(encounterId)
-                .map(mapper::toDomain);
+                .map(this::hydrate);
+    }
+
+    /*
+     * Reconstructs the full MedicalRecord aggregate, including its
+     * treatments, from persisted data.
+     *
+     * Note: vitals, observations, and diagnoses have the same
+     * one-to-many shape as treatments but are not yet re-hydrated
+     * here — see docs/decisions for the follow-up tracking this.
+     */
+    private MedicalRecord hydrate(MedicalRecordEntity entity) {
+        MedicalRecord medicalRecord = mapper.toDomain(entity);
+
+        treatmentsRepository.findByMedicalRecordId(entity.getId())
+                .forEach(treatmentEntity ->
+                        medicalRecord.addTreatment(treatmentMapper.toDomain(treatmentEntity))
+                );
+
+        return medicalRecord;
     }
 }

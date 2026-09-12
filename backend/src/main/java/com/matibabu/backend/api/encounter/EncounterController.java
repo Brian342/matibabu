@@ -4,7 +4,9 @@ import com.matibabu.backend.application.encounter.CancelEncounterUseCase;
 import com.matibabu.backend.application.encounter.DischargeEncounterUseCase;
 import com.matibabu.backend.application.encounter.GetEncounterUseCase;
 import com.matibabu.backend.application.encounter.StartEncounterUseCase;
+import com.matibabu.backend.security.CustomUserDetails;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -38,14 +40,21 @@ public class EncounterController {
         );
     }
 
+    /*
+     * The attending clinician is taken from the authenticated
+     * session: which clinician is treating a patient must not be
+     * something the client can spoof by passing a different ID.
+     */
     @PostMapping("/{patientId}")
     @ResponseStatus(HttpStatus.CREATED)
     public EncounterResponse start(
-            @PathVariable UUID patientId
+            @PathVariable UUID patientId,
+            @AuthenticationPrincipal CustomUserDetails principal
     ) {
         return EncounterResponse.from(
                 startEncounterUseCase.start(
                         patientId,
+                        principal.getClinician().getId(),
                         Instant.now()
                 )
         );

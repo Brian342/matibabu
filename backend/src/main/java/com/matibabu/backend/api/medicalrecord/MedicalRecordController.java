@@ -10,8 +10,10 @@ import com.matibabu.backend.application.medicalrecord.MedicalRecordNotFoundExcep
 import com.matibabu.backend.domain.medicalrecord.DiagnosisType;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecord;
 import com.matibabu.backend.domain.medicalrecord.VitalType;
+import com.matibabu.backend.security.CustomUserDetails;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -152,11 +154,16 @@ public class MedicalRecordController {
 
     /*
      * Adds a treatment to the medical record.
+     *
+     * The prescribing clinician is taken from the authenticated
+     * session, not from the request body: who performed the
+     * treatment must not be something the client can spoof.
      */
     @PostMapping("/treatments")
     public ResponseEntity<MedicalRecordResponse> addTreatment(
             @PathVariable UUID encounterId,
-            @RequestParam String description
+            @RequestBody AddTreatmentRequest request,
+            @AuthenticationPrincipal CustomUserDetails principal
     ) {
         MedicalRecord medicalRecord =
                 getMedicalRecordUseCase
@@ -168,7 +175,14 @@ public class MedicalRecordController {
         MedicalRecord updated =
                 addTreatment.execute(
                         medicalRecord.getId(),
-                        description
+                        request.medicineId(),
+                        principal.getClinician().getId(),
+                        request.dose(),
+                        request.doseUnit(),
+                        request.route(),
+                        request.frequency(),
+                        request.durationDays(),
+                        request.notes()
                 );
 
         return ResponseEntity.ok(MedicalRecordResponse.from(updated));

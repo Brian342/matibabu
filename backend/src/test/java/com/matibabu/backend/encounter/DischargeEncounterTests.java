@@ -45,6 +45,9 @@ class DischargeEncounterServiceTest {
 
         UUID patientId = UUID.randomUUID();
 
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-20T10:00:00Z");
 
@@ -57,7 +60,7 @@ class DischargeEncounterServiceTest {
 
         // Create an active encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, startedAt);
 
         // Persist the encounter in our in-memory repository.
         repository.save(encounter);

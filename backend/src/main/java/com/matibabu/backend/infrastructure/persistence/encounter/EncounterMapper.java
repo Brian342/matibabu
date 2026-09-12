@@ -16,6 +16,7 @@ public interface EncounterMapper {
         return Encounter.reconstitute(
                 entity.getId(),
                 entity.getPatientId(),
+                entity.getAttendingClinicianId(),
                 entity.getStartedAt(),
                 entity.getStatus(),
                 entity.getEndedAt()

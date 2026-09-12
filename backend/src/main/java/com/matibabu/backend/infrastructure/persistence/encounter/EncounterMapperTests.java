@@ -1,4 +1,5 @@
-package com.matibabu.backend.infrastructure.persistence.encounter;
+
+        package com.matibabu.backend.infrastructure.persistence.encounter;
 
 import com.matibabu.backend.domain.encounter.Encounter;
 import com.matibabu.backend.domain.encounter.EncounterStatus;
@@ -23,13 +24,18 @@ class EncounterMapperTest {
     void shouldMapDomainToEntity() {
 
         UUID patientId = UUID.randomUUID();
+        UUID attendingClinicianId = UUID.randomUUID();
 
         Instant startedAt =
                 Instant.parse("2026-08-21T08:00:00Z");
 
         // Create a domain encounter.
         Encounter encounter =
-                Encounter.start(patientId, startedAt);
+                Encounter.start(
+                        patientId,
+                        attendingClinicianId,
+                        startedAt
+                );
 
         // Convert domain object to persistence entity.
         EncounterEntity entity =
@@ -44,6 +50,11 @@ class EncounterMapperTest {
         assertEquals(
                 encounter.getPatientId(),
                 entity.getPatientId()
+        );
+
+        assertEquals(
+                encounter.getAttendingClinicianId(),
+                entity.getAttendingClinicianId()
         );
 
         assertEquals(
@@ -71,6 +82,7 @@ class EncounterMapperTest {
 
         UUID encounterId = UUID.randomUUID();
         UUID patientId = UUID.randomUUID();
+        UUID attendingClinicianId = UUID.randomUUID();
 
         Instant startedAt =
                 Instant.parse("2026-08-21T08:00:00Z");
@@ -84,6 +96,7 @@ class EncounterMapperTest {
 
         entity.setId(encounterId);
         entity.setPatientId(patientId);
+        entity.setAttendingClinicianId(attendingClinicianId);
         entity.setStartedAt(startedAt);
         entity.setStatus(EncounterStatus.DISCHARGED);
         entity.setEndedAt(endedAt);
@@ -104,6 +117,11 @@ class EncounterMapperTest {
         );
 
         assertEquals(
+                attendingClinicianId,
+                encounter.getAttendingClinicianId()
+        );
+
+        assertEquals(
                 startedAt,
                 encounter.getStartedAt()
         );
@@ -119,3 +137,4 @@ class EncounterMapperTest {
         );
     }
 }
+
