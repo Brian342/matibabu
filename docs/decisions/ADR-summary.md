@@ -276,3 +276,40 @@ Local development should remain simple while the production architecture support
 Database-specific behavior should remain in infrastructure.
 
 Database migrations, indexes, and production configuration must be handled separately from domain logic.
+
+---
+
+## ADR-011: Medicine Reference Catalog Uses Provenance-Tracked ATC Mapping
+
+### Status
+
+Accepted, partially implemented
+
+### Decision
+
+The medicine reference catalog (seeded from KEML) stores WHO ATC
+codes with an explicit provenance status rather than a bare code:
+
+```text
+CONFIRMED | AUTO_MATCHED | NEEDS_REVIEW | UNMAPPED
+```
+
+KEML-to-ATC matching is performed by a standalone offline tool, not
+by the running application. Resolving an `AUTO_MATCHED`/
+`NEEDS_REVIEW` mapping is an admin-only API action, not exposed to
+general clinicians.
+
+### Rationale
+
+ATC codes are not published by KEML and must be matched against the
+WHO ATC index. Automated name-matching resolves most entries, but
+low-confidence matches (chiefly fixed-dose combinations) must remain
+explicitly unresolved rather than guessed, since a wrong ATC code in
+a clinical system is as dangerous as a missing one. See
+`docs/decisions/ADR-06-Medicines.md` for full detail.
+
+### Consequences
+
+Every ATC code in the catalog has traceable provenance. The catalog
+schema supports future KEML updates as incremental diffs rather than
+full rebuilds.

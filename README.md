@@ -207,6 +207,62 @@ The database enforces the one-record-per-encounter constraint.
 
 ---
 
+## Medicine Reference Catalog
+
+A local catalog of prescribable medicines, seeded from the Kenya
+Essential Medicines List (KEML) and coded against the WHO ATC
+classification, so a clinician can select a medicine when recording a
+`Treatment` instead of typing a drug name as free text.
+
+KEML does not itself publish ATC codes, so each medicine's ATC
+mapping carries an explicit provenance status rather than being
+treated as always-trustworthy:
+
+```text
+CONFIRMED     - a reviewer has verified this code
+AUTO_MATCHED  - matched automatically against the WHO ATC index
+NEEDS_REVIEW  - no confident automated match was found
+UNMAPPED      - no ATC code applies
+```
+
+Implemented:
+
+* Medicine search/browse (name, generic name, ATC code)
+* Medicine retrieval by id
+* ATC mapping provenance tracking (`atc_mapping_status`, `keml_version`)
+* Admin review queue for unresolved mappings
+* Admin confirm/reject workflow for an ATC mapping, with reviewer and
+  timestamp recorded
+* Soft deactivation of medicines withdrawn from KEML
+
+Not yet implemented:
+
+* Seeding the catalog from a real KEML export (schema and tooling are
+  in place; the catalog is currently empty pending an actual import)
+* Frontend UI for the catalog or the admin review queue
+
+### API
+
+```text
+GET   /api/medicines
+GET   /api/medicines/{id}
+
+GET   /api/admin/medicines/needs-review
+PATCH /api/admin/medicines/{id}/atc-mapping
+```
+
+The admin endpoints are restricted to `ADMIN`/`SUPER_ADMIN`, since
+resolving an ATC mapping is a reference-data judgment call, not a
+per-patient prescribing action.
+
+KEML-to-ATC matching itself is done offline via
+`tools/keml-atc-matcher/`, a standalone script run manually whenever
+KEML is updated (roughly every few years) rather than as a running
+application feature. See `docs/decisions/ADR-06-Medicines.md` for the
+full design rationale.
+
+---
+
 ## Clinical Data
 
 Clinical information is represented as separate domain concepts:
@@ -282,6 +338,8 @@ medical_record_observations
 medical_record_diagnoses
 medical_record_treatments
 
+medicines
+
 clinicians
 
 SPRING_SESSION
@@ -347,6 +405,7 @@ Examples include:
 | Medical records                 | ✅          |
 | Clinical data model             | ✅          |
 | Clinical data persistence       | ✅          |
+| Medicine reference catalog      | 🚧         |
 | Local database                  | ✅          |
 | Database migrations             | ✅          |
 | Authentication                  | ✅          |
@@ -435,6 +494,7 @@ Current ADRs include:
 * **ADR-03- github issues**
 * **ADR-04- update on status**
 * **ADR-05- Medical records**
+* **ADR-06- Medicines (KEML / ATC mapping)**
 * **ADR-07- summary**
 
 ADRs are used for decisions that affect the architecture, boundaries, or development process rather than documenting routine implementation details.
