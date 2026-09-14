@@ -32,7 +32,8 @@ public class SecurityConfig {
     // URLs accessible to Admins after login
     private static final String[] ADMIN_ENDPOINTS = {
             "/api/admin",
-            "/api/admin/clinicians/*/promote" };
+            "/api/admin/clinicians/*/promote",
+            "/api/admin/medicines/**" };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,11 +44,11 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
 //                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                .requestMatchers(ADMIN_ENDPOINTS).hasAnyRole("ADMIN", "SUPER_ADMIN")
-                .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN", "SUPER_ADMIN")
-                .anyRequest().authenticated()
-        )
+                                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                                .requestMatchers(ADMIN_ENDPOINTS).hasAnyRole("ADMIN", "SUPER_ADMIN")
+                                .requestMatchers(USER_ENDPOINTS).hasAnyRole("USER", "ADMIN", "SUPER_ADMIN")
+                                .anyRequest().authenticated()
+                )
                 // Handled automatically by Spring Security
                 .formLogin(formLogin -> formLogin
                         .loginProcessingUrl("/login")

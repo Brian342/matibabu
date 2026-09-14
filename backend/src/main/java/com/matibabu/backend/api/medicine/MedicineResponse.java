@@ -1,7 +1,9 @@
 package com.matibabu.backend.api.medicine;
 
+import com.matibabu.backend.domain.medicine.AtcMappingStatus;
 import com.matibabu.backend.domain.medicine.Medicine;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public record MedicineResponse(
@@ -12,7 +14,11 @@ public record MedicineResponse(
         String form,
         String strength,
         String kemlCode,
-        boolean active
+        boolean active,
+        AtcMappingStatus atcMappingStatus,
+        String kemlVersion,
+        UUID reviewedBy,
+        Instant reviewedAt
 ) {
 
     public static MedicineResponse from(Medicine medicine) {
@@ -24,7 +30,11 @@ public record MedicineResponse(
                 medicine.getForm(),
                 medicine.getStrength(),
                 medicine.getKemlCode(),
-                medicine.isActive()
+                medicine.isActive(),
+                medicine.getAtcMappingStatus(),
+                medicine.getKemlVersion(),
+                medicine.getReviewedBy(),
+                medicine.getReviewedAt()
         );
     }
 }
