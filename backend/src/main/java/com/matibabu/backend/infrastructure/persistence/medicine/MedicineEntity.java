@@ -1,11 +1,15 @@
 package com.matibabu.backend.infrastructure.persistence.medicine;
 
+import com.matibabu.backend.domain.medicine.AtcMappingStatus;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -23,6 +27,16 @@ public class MedicineEntity {
     private String strength;
     private String kemlCode;
     private boolean active;
+
+    @Enumerated(EnumType.STRING)
+    private AtcMappingStatus atcMappingStatus;
+
+    private String kemlVersion;
+
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID reviewedBy;
+
+    private Instant reviewedAt;
 
     protected MedicineEntity() {
         // Required by JPA
@@ -90,5 +104,37 @@ public class MedicineEntity {
 
     public boolean isActive() {
         return active;
+    }
+
+    public void setAtcMappingStatus(AtcMappingStatus atcMappingStatus) {
+        this.atcMappingStatus = atcMappingStatus;
+    }
+
+    public AtcMappingStatus getAtcMappingStatus() {
+        return atcMappingStatus;
+    }
+
+    public void setKemlVersion(String kemlVersion) {
+        this.kemlVersion = kemlVersion;
+    }
+
+    public String getKemlVersion() {
+        return kemlVersion;
+    }
+
+    public void setReviewedBy(UUID reviewedBy) {
+        this.reviewedBy = reviewedBy;
+    }
+
+    public UUID getReviewedBy() {
+        return reviewedBy;
+    }
+
+    public void setReviewedAt(Instant reviewedAt) {
+        this.reviewedAt = reviewedAt;
+    }
+
+    public Instant getReviewedAt() {
+        return reviewedAt;
     }
 }

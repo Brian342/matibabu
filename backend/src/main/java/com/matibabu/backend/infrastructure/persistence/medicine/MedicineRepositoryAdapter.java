@@ -1,5 +1,6 @@
 package com.matibabu.backend.infrastructure.persistence.medicine;
 
+import com.matibabu.backend.domain.medicine.AtcMappingStatus;
 import com.matibabu.backend.domain.medicine.Medicine;
 import com.matibabu.backend.domain.medicine.MedicineRepository;
 import org.springframework.stereotype.Repository;
@@ -45,5 +46,18 @@ public class MedicineRepositoryAdapter implements MedicineRepository {
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<Medicine> findByAtcMappingStatusIn(List<AtcMappingStatus> statuses) {
+        return jpaRepository.findByAtcMappingStatusIn(statuses)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void save(Medicine medicine) {
+        jpaRepository.save(mapper.toEntity(medicine));
     }
 }

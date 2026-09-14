@@ -15,4 +15,14 @@ public interface MedicineRepository {
     List<Medicine> search(String query);
 
     List<Medicine> findAllActive();
+
+    /*
+     * Medicines whose ATC mapping still needs a reviewer's judgment
+     * (AUTO_MATCHED, not yet checked by a person; or NEEDS_REVIEW,
+     * where the importer had no confident guess at all). Powers the
+     * admin review queue.
+     */
+    List<Medicine> findByAtcMappingStatusIn(List<AtcMappingStatus> statuses);
+
+    void save(Medicine medicine);
 }

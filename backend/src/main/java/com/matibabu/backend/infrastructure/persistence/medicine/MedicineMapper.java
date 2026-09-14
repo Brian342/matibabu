@@ -21,7 +21,11 @@ public interface MedicineMapper {
                 entity.getForm(),
                 entity.getStrength(),
                 entity.getKemlCode(),
-                entity.isActive()
+                entity.isActive(),
+                entity.getAtcMappingStatus(),
+                entity.getKemlVersion(),
+                entity.getReviewedBy(),
+                entity.getReviewedAt()
         );
     }
 }

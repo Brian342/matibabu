@@ -1,5 +1,6 @@
 package com.matibabu.backend.infrastructure.persistence.medicine;
 
+import com.matibabu.backend.domain.medicine.AtcMappingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -12,4 +13,6 @@ public interface SpringDataMedicinesRepository extends JpaRepository<MedicineEnt
     List<MedicineEntity> findByActiveTrueAndNameContainingIgnoreCaseOrActiveTrueAndGenericNameContainingIgnoreCaseOrActiveTrueAndAtcCodeContainingIgnoreCase(
             String name, String genericName, String atcCode
     );
+
+    List<MedicineEntity> findByAtcMappingStatusIn(List<AtcMappingStatus> statuses);
 }
