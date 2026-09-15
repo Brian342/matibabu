@@ -97,6 +97,20 @@ When a `PatientRegistered` (or demographic-update) entry arrives, the hub's matc
 
 A national identifier field was previously deferred to Future Evolution; it is brought into the core design now because Kenya's own civil registration already gives every person one of these two identifiers from birth, so requiring the matching engine to work without them (Tier 2) remains necessary, but treating them as the strongest available key does not need to wait for a future national digital-identity rollout — birth certificates and national IDs already exist today. A future SHA-issued or Huduma Namba–style identifier would slot into Tier 1 as an additional identity-document field without changing the tiering logic.
 
+### Reducing duplicate registration when a facility is online
+
+Everything above reconciles duplicate local patients *after the fact*, once both facilities' outbox entries reach the hub. That is the only option while a facility is offline, but it means a patient who has already been seen elsewhere still gets a brand-new local `Patient` (and a brand-new provisional `MasterPatientRecord`) every time they register at a facility that hasn't synced with theirs yet — which, for someone who moves between a handful of facilities regularly, could mean several parallel provisional identities sitting in the hub's review queue before matching ever catches up.
+
+When a facility *is* online, registration can do better: before creating a new local `Patient`, the facility calls a read-only hub endpoint — `PatientLookupController` under the `synchronization` module — passing the same fields the matching engine itself would use (identity document if captured, otherwise name/DOB/gender/phone). The hub returns candidate matches using the identical Tier 1 / Tier 2 rules already defined above, but the response is deliberately minimal: enough to let staff confirm identity (name, DOB, gender, a masked identity-document tail, and how many other facilities already hold records for this person), never another facility's full patient record or clinical history — a facility has no legitimate need to see clinical detail it wasn't the one to record, and returning it would violate the same Data Protection Act boundary this ADR already applies to sync payloads generally.
+
+This lookup is strictly advisory and best-effort:
+
+* If the hub is unreachable, times out, or returns no match, registration proceeds exactly as it does today — a facility must never be blocked from registering someone because a network call failed. This is not a new constraint on the offline-first guarantee, it's a strict subset of it.
+* If the hub returns a candidate, front-desk staff are shown it and asked to confirm or dismiss — the system never auto-substitutes another facility's identity for a new local registration. Local-first still holds: a new local `Patient` is created either way, with its own new local UUID, exactly as if the lookup had not happened.
+* If staff confirm the candidate, the local `Patient` is registered carrying an optimistic hint — the confirmed `MasterPatientRecord` id — that rides along in its `PatientRegistered` outbox entry. When that entry eventually reaches the hub's matching engine, a confirmed hint short-circuits straight to a link, skipping the Tier 1/Tier 2 heuristic entirely, since a human already did the same confirmation the matching engine exists to approximate. An unconfirmed or absent hint falls back to ordinary Tier 1/Tier 2 matching as already described.
+
+This reduces, but does not eliminate, duplicate provisional identities — it only helps when the registering facility happens to be online at that moment. The asynchronous matching engine remains the backstop for every case this lookup can't reach.
+
 ### Standards and compliance boundary
 
 * Sync payload shapes are kept structurally close to the HL7 FHIR resources they conceptually correspond to (`Encounter`, `Condition`, `ServiceRequest`, `Patient`), even though the wire format is not literally FHIR yet. This keeps a future KHIS/DHIS2 or national health-exchange integration an addition at the boundary, consistent with ADR-07's existing position that DHIS2 concerns stay outside the core domain.
@@ -120,6 +134,7 @@ Treating patient identity as a linking problem rather than a merge problem avoid
 * No local patient, encounter, or referral history is ever deleted or overwritten by the sync process — reconciliation is additive (linking), not destructive.
 * Matching prefers an exact identity-document match (national ID or birth certificate number) over demographic heuristics wherever one is available, and treats conflicting document numbers as a hard signal against auto-linking even when demographics look similar.
 * Sync payload shapes are chosen to make a future FHIR/DHIS2 boundary integration additive rather than a rework.
+* When a facility is online, an advisory hub lookup at registration time can catch a returning patient before a duplicate local identity is even created, without weakening the offline-first guarantee — the lookup degrades to a no-op the moment the hub isn't reachable.
 
 ### Trade-offs
 
@@ -140,7 +155,8 @@ synchronization
 │   ├── SyncOutboxEntry.java
 │   └── SyncOutboxRepository.java
 ├── client
-│   └── SyncClient.java              (facility role: batches and pushes unsynced entries)
+│   ├── SyncClient.java              (facility role: batches and pushes unsynced entries)
+│   └── PatientLookupClient.java     (facility role: advisory hub lookup at registration time)
 ├── ingestion
 │   ├── SyncIngestionController.java (hub role: receives batches, acknowledges per entry)
 │   └── SyncIngestionService.java    (dispatches each entry back to the matching use case)
@@ -148,7 +164,8 @@ synchronization
     ├── MasterPatientRecord.java
     ├── PatientIdentityLink.java
     ├── PatientMatchCandidate.java
-    └── PatientMatchingService.java
+    ├── PatientMatchingService.java
+    └── PatientLookupController.java (hub role: read-only, minimal-PII candidate search)
 ```
 
 Facility-side schema additions: a `sync_outbox` table (new Flyway migration) storing entries as described above, and two new nullable columns on `patients` — `national_id` and `birth_certificate_number` — each with a partial unique index (unique where non-null) so a single facility's own local database cannot itself register the same document number under two different patients, which is also a first line of defense before the value ever reaches the hub's matching engine.
