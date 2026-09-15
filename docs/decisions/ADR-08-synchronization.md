@@ -74,18 +74,30 @@ PatientIdentityLink            — (facilityId, localPatientId) → MasterPatien
 PatientMatchCandidate          — an ambiguous match awaiting human review
 ```
 
-When a `PatientRegistered` (or demographic-update) entry arrives, the hub's matching engine compares it against existing `MasterPatientRecord`s using a normalized deterministic key — first name, last name, date of birth, and gender, strengthened by phone number where present:
+`Patient` gains two optional identifying-document fields, captured at registration when available:
 
-* **Strong match** (core identifying fields agree) → the local patient is linked to the existing `MasterPatientRecord`; no new canonical identity is created.
-* **No match** → a new `MasterPatientRecord` is created, linked to this one local patient.
-* **Ambiguous match** (e.g. name and date of birth agree but phone number doesn't, or name similarity falls within a fuzzy-match threshold without being exact) → a `PatientMatchCandidate` is queued for a records officer to confirm or reject. The local patient still receives a provisional `MasterPatientRecord` of its own immediately, so care is never blocked on review — review only ever *links* records together after the fact, it never deletes or withholds clinical data.
+```text
+nationalId               — Kenyan national ID number (adults, typically 18+)
+birthCertificateNumber   — birth certificate number (minors, before a national ID exists)
+```
 
-This deliberately does not require a national identifier to exist first. When one becomes available (a Huduma Namba–style number, or a future SHA-issued identifier), it becomes the strongest possible key in the same matching engine without changing its shape — it is a strengthening of the match, not a prerequisite for it.
+Both are nullable: a patient may be a newborn with neither yet issued, or registered before staff capture the document. Neither is required to register a patient locally — a facility must never be blocked from registering someone because they lack ID paperwork.
+
+When a `PatientRegistered` (or demographic-update) entry arrives, the hub's matching engine checks candidates against existing `MasterPatientRecord`s in two tiers:
+
+* **Tier 1 — identity document.** If the incoming record carries a `nationalId` or `birthCertificateNumber` and an existing `MasterPatientRecord` carries the same value in the same field, that is treated as decisive: the local patient is linked automatically, without falling through to demographic comparison at all. Conversely, if both records carry a value for the *same* field and the values **differ**, that is treated as decisive evidence they are *not* the same person — even if every demographic field matches (e.g. twins, a name shared within a family) — and the incoming record is never auto-linked to that candidate on demographic grounds alone.
+* **Tier 2 — demographic heuristic.** Used whenever neither record has a usable identity document to compare (one or both fields absent on one side), following the same strong/no-match/ambiguous matching described below on first name, last name, date of birth, and gender, strengthened by phone number where present:
+  * **Strong match** (core identifying fields agree) → linked to the existing `MasterPatientRecord`.
+  * **No match** → a new `MasterPatientRecord` is created, linked to this one local patient.
+  * **Ambiguous match** (e.g. name and date of birth agree but phone number doesn't, or name similarity falls within a fuzzy-match threshold without being exact) → a `PatientMatchCandidate` is queued for a records officer to confirm or reject. The local patient still receives a provisional `MasterPatientRecord` of its own immediately, so care is never blocked on review — review only ever *links* records together after the fact, it never deletes or withholds clinical data.
+
+A national identifier field was previously deferred to Future Evolution; it is brought into the core design now because Kenya's own civil registration already gives every person one of these two identifiers from birth, so requiring the matching engine to work without them (Tier 2) remains necessary, but treating them as the strongest available key does not need to wait for a future national digital-identity rollout — birth certificates and national IDs already exist today. A future SHA-issued or Huduma Namba–style identifier would slot into Tier 1 as an additional identity-document field without changing the tiering logic.
 
 ### Standards and compliance boundary
 
 * Sync payload shapes are kept structurally close to the HL7 FHIR resources they conceptually correspond to (`Encounter`, `Condition`, `ServiceRequest`, `Patient`), even though the wire format is not literally FHIR yet. This keeps a future KHIS/DHIS2 or national health-exchange integration an addition at the boundary, consistent with ADR-07's existing position that DHIS2 concerns stay outside the core domain.
 * All sync traffic is TLS-only. The synchronization module must not log full payloads above debug level, since they carry patient-identifying clinical data — sensitive personal data under Kenya's Data Protection Act 2019.
+* `nationalId` and `birthCertificateNumber` are the two most sensitive fields in this design — a national ID number is itself sufficient to enable identity theft if it leaks — so they get treatment beyond the general PII handling above: never returned in API responses beyond what a match-review workflow strictly needs, masked (e.g. last 4 digits only) anywhere they appear in a UI or audit log entry, and excluded entirely from the general application-level audit logging used elsewhere, in favor of the dedicated match-decision audit entry below.
 * Every sync ingestion and every patient-match decision, automatic or manual, is recorded as an audit entry: facility, actor (a matching-engine rule or a named records officer), decision, and timestamp. This is required both for clinical-safety review of mistaken links and for DPA accountability.
 
 ## Rationale
@@ -102,7 +114,7 @@ Treating patient identity as a linking problem rather than a merge problem avoid
 * The hub enforces the exact same domain rules as every facility, because it runs the exact same application layer.
 * Sync is naturally idempotent and resumable: a dropped connection mid-batch never double-applies or loses an entry.
 * No local patient, encounter, or referral history is ever deleted or overwritten by the sync process — reconciliation is additive (linking), not destructive.
-* The design leaves room for a national patient identifier to be introduced later purely as a stronger matching key.
+* Matching prefers an exact identity-document match (national ID or birth certificate number) over demographic heuristics wherever one is available, and treats conflicting document numbers as a hard signal against auto-linking even when demographics look similar.
 * Sync payload shapes are chosen to make a future FHIR/DHIS2 boundary integration additive rather than a rework.
 
 ### Trade-offs
@@ -134,17 +146,17 @@ synchronization
     └── PatientMatchingService.java
 ```
 
-Facility-side schema addition: a `sync_outbox` table (new Flyway migration) storing entries as described above.
+Facility-side schema additions: a `sync_outbox` table (new Flyway migration) storing entries as described above, and two new nullable columns on `patients` — `national_id` and `birth_certificate_number` — each with a partial unique index (unique where non-null) so a single facility's own local database cannot itself register the same document number under two different patients, which is also a first line of defense before the value ever reaches the hub's matching engine.
 
-Hub-only schema additions (`master_patient_records`, `patient_identity_links`, `patient_match_candidates`) are only meaningful when `app.node.role=hub`; they can be introduced via a separate Flyway migration location activated by that profile, consistent with the existing `application-local.properties` / `application-prod.properties` split.
+Hub-only schema additions (`master_patient_records`, `patient_identity_links`, `patient_match_candidates`) are only meaningful when `app.node.role=hub`; they can be introduced via a separate Flyway migration location activated by that profile, consistent with the existing `application-local.properties` / `application-prod.properties` split. The hub indexes `master_patient_records` on `national_id` and `birth_certificate_number` to make Tier 1 lookups a direct index hit rather than a scan.
 
 ## Future Evolution
 
 This ADR deliberately leaves several concerns for later decisions or implementation work:
 
-1. **National patient identifier**
+1. **Future national digital identifier**
 
-   Once a national identifier (e.g. Huduma Namba or an SHA-issued number) is available, `Patient` should gain an optional field for it, and the matching engine should treat an exact match on that field as decisive on its own, ahead of the name/DOB/phone heuristic.
+   `nationalId` and `birthCertificateNumber` cover Kenya's existing civil registration documents. If a future SHA-issued or Huduma Namba–style digital identifier is introduced, it should be added as an additional Tier 1 identity-document field alongside them, not a replacement — some patients will hold one identifier before the other becomes available.
 
 2. **DHIS2 and FHIR-native integration**
 
