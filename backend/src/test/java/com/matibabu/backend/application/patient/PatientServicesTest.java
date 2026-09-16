@@ -59,7 +59,9 @@ class PatientServicesTest {
                 dob,
                 Gender.MALE,
                 "+254712345678",
-                "Nairobi"
+                "Nairobi",
+                null,
+                null
         );
 
         assertNotNull(patient);
@@ -83,7 +85,9 @@ class PatientServicesTest {
                 dob,
                 Gender.MALE,
                 "+254712345678",
-                "Nairobi"
+                "Nairobi",
+                null,
+                null
         ));
 
         verify(patientRepository).existsByPhoneNumber("+254712345678");
@@ -93,7 +97,7 @@ class PatientServicesTest {
     @Test
     void getByIdReturnsPatientWhenFound() {
         UUID id = UUID.randomUUID();
-        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi");
+        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi", null, null);
         when(patientRepository.findById(id)).thenReturn(Optional.of(mockPatient));
 
         Patient patient = getPatientService.getById(id);
@@ -115,7 +119,7 @@ class PatientServicesTest {
     @Test
     void listReturnsPaginatedPatients() {
         Pageable pageable = PageRequest.of(0, 20);
-        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi");
+        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi", null, null);
         Page<Patient> page = new PageImpl<>(List.of(mockPatient), pageable, 1);
         when(patientRepository.findAll(pageable)).thenReturn(page);
 
@@ -130,7 +134,7 @@ class PatientServicesTest {
     @Test
     void updateModifiesExistingPatient() {
         UUID id = UUID.randomUUID();
-        Patient existing = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi");
+        Patient existing = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi", null, null);
         when(patientRepository.findById(id)).thenReturn(Optional.of(existing));
         when(patientRepository.findByPhoneNumber("+254700000000")).thenReturn(Optional.empty());
         when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -142,7 +146,9 @@ class PatientServicesTest {
                 LocalDate.of(1995, 6, 15),
                 Gender.MALE,
                 "+254700000000",
-                "Mombasa"
+                "Mombasa",
+                null,
+                null
         );
 
         assertNotNull(updated);
@@ -157,8 +163,8 @@ class PatientServicesTest {
     void updateThrowsExceptionWhenPhoneNumberBelongsToAnotherPatient() {
         UUID id = UUID.randomUUID();
         UUID otherId = UUID.randomUUID();
-        Patient existing = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi");
-        Patient other = new Patient("Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, "+254700000000", "Kisumu");
+        Patient existing = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi", null, null);
+        Patient other = new Patient("Jane", "Doe", LocalDate.of(1990, 1, 1), Gender.FEMALE, "+254700000000", "Kisumu", null, null);
         // Ensure other has otherId
         Patient otherWithId = Patient.reconstitute(
                 otherId,
@@ -168,6 +174,8 @@ class PatientServicesTest {
                 other.getGender(),
                 other.getPhoneNumber(),
                 other.getAddress(),
+                other.getNationalId(),
+                other.getBirthCertificateNumber(),
                 other.getCreatedAt(),
                 other.getUpdatedAt()
         );
@@ -182,7 +190,9 @@ class PatientServicesTest {
                 LocalDate.of(1995, 6, 15),
                 Gender.MALE,
                 "+254700000000",
-                "Mombasa"
+                "Mombasa",
+                null,
+                null
         ));
 
         verify(patientRepository).findById(id);
@@ -202,6 +212,8 @@ class PatientServicesTest {
                 "+254712345678",
                 "Nairobi",
                 null,
+                null,
+                null,
                 null
         );
         when(patientRepository.findById(id)).thenReturn(Optional.of(existing));
@@ -215,7 +227,9 @@ class PatientServicesTest {
                 LocalDate.of(1995, 6, 15),
                 Gender.MALE,
                 "+254712345678",
-                "Mombasa"
+                "Mombasa",
+                null,
+                null
         );
 
         assertNotNull(updated);
@@ -236,7 +250,9 @@ class PatientServicesTest {
                 LocalDate.of(1995, 6, 15),
                 Gender.MALE,
                 "+254700000000",
-                "Mombasa"
+                "Mombasa",
+                null,
+                null
         ));
         verify(patientRepository).findById(id);
         verify(patientRepository, never()).save(any(Patient.class));
@@ -265,7 +281,7 @@ class PatientServicesTest {
 
     @Test
     void searchByPhoneNumberReturnsPatientWhenFound() {
-        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi");
+        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi", null, null);
         when(patientRepository.findByPhoneNumber("+254712345678")).thenReturn(Optional.of(mockPatient));
 
         Patient patient = searchPatientByPhoneNumberService.searchByPhoneNumber("+254712345678");
@@ -278,7 +294,7 @@ class PatientServicesTest {
 
     @Test
     void searchByPhoneNumberHandlesLeadingSpaceDecodedPlus() {
-        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi");
+        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi", null, null);
         when(patientRepository.findByPhoneNumber(" 254712345678")).thenReturn(Optional.empty());
         when(patientRepository.findByPhoneNumber("254712345678")).thenReturn(Optional.empty());
         when(patientRepository.findByPhoneNumber("+254712345678")).thenReturn(Optional.of(mockPatient));
@@ -291,7 +307,7 @@ class PatientServicesTest {
 
     @Test
     void searchByPhoneNumberHandlesKenyanLocalFormat() {
-        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi");
+        Patient mockPatient = new Patient("John", "Kamau", LocalDate.of(1995, 6, 15), Gender.MALE, "+254712345678", "Nairobi", null, null);
         when(patientRepository.findByPhoneNumber("0712345678")).thenReturn(Optional.empty());
         when(patientRepository.findByPhoneNumber("+0712345678")).thenReturn(Optional.empty());
         when(patientRepository.findByPhoneNumber("+254712345678")).thenReturn(Optional.of(mockPatient));

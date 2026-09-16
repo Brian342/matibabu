@@ -17,6 +17,7 @@ public interface EncounterMapper {
                 entity.getId(),
                 entity.getPatientId(),
                 entity.getAttendingClinicianId(),
+                entity.getFacilityId(),
                 entity.getStartedAt(),
                 entity.getStatus(),
                 entity.getEndedAt()

@@ -1,5 +1,6 @@
 package com.matibabu.backend.application.encounter;
 
+import com.matibabu.backend.config.NodeIdentity;
 import com.matibabu.backend.domain.encounter.Encounter;
 import com.matibabu.backend.domain.encounter.EncounterRepository;
 import com.matibabu.backend.domain.encounter.EncounterStatus;
@@ -55,6 +56,7 @@ class StartEncounterServiceTest {
 
         UUID patientId = UUID.randomUUID();
         UUID attendingClinicianId = UUID.randomUUID();
+        UUID facilityId = UUID.randomUUID();
 
         Instant startedAt =
                 Instant.parse("2026-08-20T10:00:00Z");
@@ -65,7 +67,7 @@ class StartEncounterServiceTest {
 
         // Create the application service.
         StartEncounterService service =
-                new StartEncounterService(repository);
+                new StartEncounterService(repository, new NodeIdentity("facility", facilityId.toString()));
 
         // Execute the start encounter use case.
         Encounter encounter =
@@ -88,6 +90,12 @@ class StartEncounterServiceTest {
         assertEquals(
                 attendingClinicianId,
                 encounter.getAttendingClinicianId()
+        );
+
+        // The configured facility should be associated with the encounter.
+        assertEquals(
+                facilityId,
+                encounter.getFacilityId()
         );
 
         // The encounter should start as ACTIVE.

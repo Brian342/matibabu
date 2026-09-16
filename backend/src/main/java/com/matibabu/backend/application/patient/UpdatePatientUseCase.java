@@ -15,6 +15,8 @@ public interface UpdatePatientUseCase {
             LocalDate dateOfBirth,
             Gender gender,
             String phoneNumber,
-            String address
+            String address,
+            String nationalId,
+            String birthCertificateNumber
     );
 }

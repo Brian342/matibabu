@@ -17,6 +17,11 @@ public class Encounter {
     // (see reconstitute); every newly started encounter requires one.
     private UUID attendingClinicianId;
 
+    // The facility that recorded this encounter.
+    // Nullable only for encounters recorded before this field existed
+    // (see reconstitute); every newly started encounter requires one.
+    private UUID facilityId;
+
     private EncounterStatus status;
     private Instant endedAt;
 
@@ -35,7 +40,7 @@ public class Encounter {
         this.endedAt = null;
     }
     //start an encounter
-    public static Encounter start(UUID patientId, UUID attendingClinicianId, Instant now) {
+    public static Encounter start(UUID patientId, UUID attendingClinicianId, UUID facilityId, Instant now) {
         UUID encounterId = UuidCreator.getTimeOrderedEpoch();
         Encounter encounter = new Encounter(
                 encounterId,
@@ -45,6 +50,10 @@ public class Encounter {
         encounter.attendingClinicianId = Objects.requireNonNull(
                 attendingClinicianId,
                 "An encounter must record which clinician is attending"
+        );
+        encounter.facilityId = Objects.requireNonNull(
+                facilityId,
+                "An encounter must record which facility it belongs to"
         );
         return encounter;
     }
@@ -100,6 +109,10 @@ public class Encounter {
         return attendingClinicianId;
     }
 
+    public UUID getFacilityId() {
+        return facilityId;
+    }
+
     public EncounterStatus getStatus() {
         return status;
     }
@@ -116,12 +129,14 @@ public class Encounter {
             UUID id,
             UUID patientId,
             UUID attendingClinicianId,
+            UUID facilityId,
             Instant startedAt,
             EncounterStatus status,
             Instant endedAt
     ) {
         Encounter encounter = new Encounter(id, patientId, startedAt);
         encounter.attendingClinicianId = attendingClinicianId;
+        encounter.facilityId = facilityId;
         encounter.status = status;
         encounter.endedAt = endedAt;
         return encounter;

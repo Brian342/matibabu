@@ -5,9 +5,15 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
+/*
+ * nationalId and birthCertificateNumber are optional, and updatable
+ * here since a document is often captured after initial registration
+ * rather than at it. See docs/decisions/ADR-08-synchronization.md.
+ */
 public record UpdatePatientRequest(
 
         @NotBlank
@@ -28,6 +34,12 @@ public record UpdatePatientRequest(
         String phoneNumber,
 
         @NotBlank
-        String address
+        String address,
+
+        @Size(max = 50)
+        String nationalId,
+
+        @Size(max = 50)
+        String birthCertificateNumber
 ) {
 }

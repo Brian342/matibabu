@@ -26,7 +26,9 @@ public class UpdatePatientService implements UpdatePatientUseCase {
             LocalDate dateOfBirth,
             Gender gender,
             String phoneNumber,
-            String address
+            String address,
+            String nationalId,
+            String birthCertificateNumber
     ) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
@@ -42,7 +44,9 @@ public class UpdatePatientService implements UpdatePatientUseCase {
                 dateOfBirth,
                 gender,
                 phoneNumber,
-                address
+                address,
+                nationalId,
+                birthCertificateNumber
         );
 
         return patientRepository.save(patient);
