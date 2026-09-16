@@ -38,7 +38,8 @@ public class ReferralEntity {
     @Enumerated(EnumType.STRING)
     private ReferralUrgency urgency;
 
-    private String receivingFacility;
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID receivingFacilityId;
     private String department;
 
     @Enumerated(EnumType.STRING)
@@ -107,12 +108,12 @@ public class ReferralEntity {
         this.urgency = urgency;
     }
 
-    public String getReceivingFacility() {
-        return receivingFacility;
+    public UUID getReceivingFacilityId() {
+        return receivingFacilityId;
     }
 
-    public void setReceivingFacility(String receivingFacility) {
-        this.receivingFacility = receivingFacility;
+    public void setReceivingFacilityId(UUID receivingFacilityId) {
+        this.receivingFacilityId = receivingFacilityId;
     }
 
     public String getDepartment() {

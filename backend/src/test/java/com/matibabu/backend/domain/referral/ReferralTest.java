@@ -1,5 +1,6 @@
 package com.matibabu.backend.domain.referral;
 
+import com.matibabu.backend.exception.ReferralNotPendingException;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -17,7 +18,7 @@ class ReferralTest {
                 null,
                 "Suspected fracture, needs imaging",
                 ReferralUrgency.URGENT,
-                "Kenyatta National Hospital",
+                UUID.randomUUID(),
                 "Radiology",
                 Instant.now()
         );
@@ -51,16 +52,16 @@ class ReferralTest {
         assertThrows(IllegalArgumentException.class, () ->
                 Referral.create(
                         UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), null,
-                        "   ", ReferralUrgency.ROUTINE, "Some Hospital", null, Instant.now()
+                        "   ", ReferralUrgency.ROUTINE, UUID.randomUUID(), null, Instant.now()
                 ));
     }
 
     @Test
-    void referralRejectsBlankReceivingFacility() {
-        assertThrows(IllegalArgumentException.class, () ->
+    void referralRequiresReceivingFacility() {
+        assertThrows(NullPointerException.class, () ->
                 Referral.create(
                         UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), null,
-                        "Reason", ReferralUrgency.ROUTINE, "", null, Instant.now()
+                        "Reason", ReferralUrgency.ROUTINE, null, null, Instant.now()
                 ));
     }
 
@@ -69,7 +70,7 @@ class ReferralTest {
         assertThrows(NullPointerException.class, () ->
                 Referral.create(
                         UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), null,
-                        "Reason", null, "Some Hospital", null, Instant.now()
+                        "Reason", null, UUID.randomUUID(), null, Instant.now()
                 ));
     }
 
@@ -129,7 +130,7 @@ class ReferralTest {
 
         Referral referral = Referral.reconstitute(
                 id, encounterId, patientId, referringClinicianId, diagnosisId,
-                "Reason", ReferralUrgency.EMERGENCY, "Hospital", "Cardiology",
+                "Reason", ReferralUrgency.EMERGENCY, UUID.randomUUID(), "Cardiology",
                 ReferralStatus.COMPLETED, createdAt, resolvedBy, resolvedAt
         );
 

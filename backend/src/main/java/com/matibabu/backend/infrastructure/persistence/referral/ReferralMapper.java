@@ -21,7 +21,7 @@ public interface ReferralMapper {
                 entity.getDiagnosisId(),
                 entity.getReason(),
                 entity.getUrgency(),
-                entity.getReceivingFacility(),
+                entity.getReceivingFacilityId(),
                 entity.getDepartment(),
                 entity.getStatus(),
                 entity.getCreatedAt(),

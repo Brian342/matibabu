@@ -1,4 +1,4 @@
-package com.matibabu.backend.domain.referral;
+package com.matibabu.backend.exception;
 
 public class ReferralNotPendingException extends RuntimeException {
     public ReferralNotPendingException(String message) {
