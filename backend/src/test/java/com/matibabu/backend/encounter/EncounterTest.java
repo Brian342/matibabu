@@ -28,11 +28,15 @@ class EncounterTest {
 
         UUID attendingClinicianId =
                 UUID.randomUUID();
+
+        UUID facilityId =
+                UUID.randomUUID();
+
         Instant now = Instant.now();
 
         // Start a new encounter for the patient.
         Encounter encounter =
-                Encounter.start(patientId, attendingClinicianId, now);
+                Encounter.start(patientId, attendingClinicianId, facilityId, now);
 
         // The domain should generate an ID for the new encounter.
         assertNotNull(encounter.getId());
@@ -42,6 +46,9 @@ class EncounterTest {
 
         // The supplied start time should be preserved.
         assertEquals(now, encounter.getStartedAt());
+
+        // The supplied facility should be preserved.
+        assertEquals(facilityId, encounter.getFacilityId());
 
         // A newly started encounter must always be ACTIVE.
         assertEquals(
@@ -69,6 +76,9 @@ class EncounterTest {
         UUID attendingClinicianId =
                 UUID.randomUUID();
 
+        UUID facilityId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -77,7 +87,7 @@ class EncounterTest {
 
         // Create an active encounter.
         Encounter encounter =
-                Encounter.start(patientId, attendingClinicianId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, facilityId, startedAt);
 
         // Perform the domain operation.
         encounter.discharge(dischargedAt);
@@ -111,6 +121,9 @@ class EncounterTest {
         UUID attendingClinicianId =
                 UUID.randomUUID();
 
+        UUID facilityId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -119,7 +132,7 @@ class EncounterTest {
 
         // Create an active encounter.
         Encounter encounter =
-                Encounter.start(patientId, attendingClinicianId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, facilityId, startedAt);
 
         // Cancel the encounter.
         encounter.cancel(cancelledAt);
@@ -155,6 +168,9 @@ class EncounterTest {
         UUID attendingClinicianId =
                 UUID.randomUUID();
 
+        UUID facilityId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -163,7 +179,7 @@ class EncounterTest {
 
         // Start the encounter.
         Encounter encounter =
-                Encounter.start(patientId, attendingClinicianId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, facilityId, startedAt);
 
         // Discharge it once.
         encounter.discharge(dischargedAt);
@@ -195,6 +211,9 @@ class EncounterTest {
         UUID attendingClinicianId =
                 UUID.randomUUID();
 
+        UUID facilityId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T10:00:00Z");
 
@@ -203,7 +222,7 @@ class EncounterTest {
 
         // Create the encounter.
         Encounter encounter =
-                Encounter.start(patientId, attendingClinicianId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, facilityId, startedAt);
 
         // Move the encounter into its terminal DISCHARGED state.
         encounter.discharge(dischargedAt);
@@ -228,6 +247,9 @@ class EncounterTest {
         UUID attendingClinicianId =
                 UUID.randomUUID();
 
+        UUID facilityId =
+                UUID.randomUUID();
+
         Instant startedAt =
                 Instant.parse("2026-08-19T12:00:00Z");
 
@@ -236,12 +258,60 @@ class EncounterTest {
 
         // Create the encounter.
         Encounter encounter =
-                Encounter.start(patientId, attendingClinicianId, startedAt);
+                Encounter.start(patientId, attendingClinicianId, facilityId, startedAt);
 
         // Attempt to discharge using a time before the encounter started.
         assertThrows(
                 IllegalArgumentException.class,
                 () -> encounter.discharge(invalidEndTime)
         );
+    }
+
+
+    /*
+     * A facility must always be recorded for a newly started
+     * encounter, the same way an attending clinician must be.
+     */
+    @Test
+    void shouldNotStartEncounterWithoutFacility() {
+        UUID patientId = UUID.randomUUID();
+
+        UUID attendingClinicianId =
+                UUID.randomUUID();
+
+        Instant now = Instant.now();
+
+        assertThrows(
+                NullPointerException.class,
+                () -> Encounter.start(patientId, attendingClinicianId, null, now)
+        );
+    }
+
+
+    /*
+     * Encounters recorded before facilityId existed have no facility
+     * on record. Reconstitute must tolerate that rather than
+     * rejecting the row.
+     */
+    @Test
+    void shouldReconstituteEncounterWithoutFacility() {
+        UUID id = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        UUID attendingClinicianId = UUID.randomUUID();
+
+        Instant startedAt =
+                Instant.parse("2026-08-19T10:00:00Z");
+
+        Encounter encounter = Encounter.reconstitute(
+                id,
+                patientId,
+                attendingClinicianId,
+                null,
+                startedAt,
+                EncounterStatus.DISCHARGED,
+                Instant.parse("2026-08-19T12:00:00Z")
+        );
+
+        assertNull(encounter.getFacilityId());
     }
 }

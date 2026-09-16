@@ -25,6 +25,7 @@ class EncounterMapperTest {
 
         UUID patientId = UUID.randomUUID();
         UUID attendingClinicianId = UUID.randomUUID();
+        UUID facilityId = UUID.randomUUID();
 
         Instant startedAt =
                 Instant.parse("2026-08-21T08:00:00Z");
@@ -34,6 +35,7 @@ class EncounterMapperTest {
                 Encounter.start(
                         patientId,
                         attendingClinicianId,
+                        facilityId,
                         startedAt
                 );
 
@@ -55,6 +57,11 @@ class EncounterMapperTest {
         assertEquals(
                 encounter.getAttendingClinicianId(),
                 entity.getAttendingClinicianId()
+        );
+
+        assertEquals(
+                encounter.getFacilityId(),
+                entity.getFacilityId()
         );
 
         assertEquals(
@@ -83,6 +90,7 @@ class EncounterMapperTest {
         UUID encounterId = UUID.randomUUID();
         UUID patientId = UUID.randomUUID();
         UUID attendingClinicianId = UUID.randomUUID();
+        UUID facilityId = UUID.randomUUID();
 
         Instant startedAt =
                 Instant.parse("2026-08-21T08:00:00Z");
@@ -97,6 +105,7 @@ class EncounterMapperTest {
         entity.setId(encounterId);
         entity.setPatientId(patientId);
         entity.setAttendingClinicianId(attendingClinicianId);
+        entity.setFacilityId(facilityId);
         entity.setStartedAt(startedAt);
         entity.setStatus(EncounterStatus.DISCHARGED);
         entity.setEndedAt(endedAt);
@@ -119,6 +128,11 @@ class EncounterMapperTest {
         assertEquals(
                 attendingClinicianId,
                 encounter.getAttendingClinicianId()
+        );
+
+        assertEquals(
+                facilityId,
+                encounter.getFacilityId()
         );
 
         assertEquals(
