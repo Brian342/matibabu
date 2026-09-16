@@ -79,13 +79,6 @@ public class Treatment {
         this.prescribedAt = Instant.now();
     }
 
-    /*
-     * Reconstruct an existing treatment from persisted data.
-     *
-     * prescribedByClinicianId is tolerated as null here (unlike the
-     * constructor above) so that treatments recorded before this
-     * field existed can still be loaded without crashing.
-     */
     public static Treatment reconstitute(
             UUID id,
             UUID medicalRecordId,
@@ -130,10 +123,6 @@ public class Treatment {
         return Optional.ofNullable(medicineId);
     }
 
-    /*
-     * Nullable only for treatments persisted before this field
-     * existed. Every newly created treatment is required to have one.
-     */
     public UUID getPrescribedByClinicianId() {
         return prescribedByClinicianId;
     }

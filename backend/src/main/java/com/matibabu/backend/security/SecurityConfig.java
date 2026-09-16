@@ -23,7 +23,8 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             "/",
             "/auth/register",
-            "/csrf"
+            "/csrf",
+            "/login"
     };
 
     // URLs accessible to Users after login

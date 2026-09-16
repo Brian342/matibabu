@@ -35,7 +35,7 @@ public class Medicine {
 
     // Which KEML edition this row was seeded/last confirmed against,
     // e.g. "KEML 2023". Nullable for medicines added outside a KEML
-    // import.
+
     private String kemlVersion;
 
     // Who resolved atcMappingStatus out of NEEDS_REVIEW, and when.
@@ -64,9 +64,9 @@ public class Medicine {
                 : AtcMappingStatus.UNMAPPED;
     }
 
-    /*
-     * Reconstruct an existing medicine from persisted data.
-     */
+
+     //Reconstruct an existing medicine from persisted data.
+
     public static Medicine reconstitute(
             UUID id,
             String name,
@@ -94,8 +94,6 @@ public class Medicine {
     /*
      * A reviewer (pharmacist/admin) confirms the correct ATC code for
      * a medicine that was previously AUTO_MATCHED or NEEDS_REVIEW.
-     * This is the only path that sets status to CONFIRMED — a bulk
-     * seed import cannot self-certify its own guesses.
      */
     public void confirmAtcCode(String atcCode, UUID reviewedBy, Instant reviewedAt) {
         this.atcCode = Objects.requireNonNull(atcCode, "atcCode cannot be null when confirming a mapping");
