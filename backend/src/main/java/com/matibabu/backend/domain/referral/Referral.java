@@ -1,6 +1,7 @@
 package com.matibabu.backend.domain.referral;
 
 import com.github.f4b6a3.uuid.UuidCreator;
+import com.matibabu.backend.exception.ReferralNotPendingException;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -13,15 +14,13 @@ public class Referral {
     private final UUID patientId;
     private final UUID referringClinicianId;
 
-    // The diagnosis that prompted this referral, if any. Optional:
 
     private final UUID diagnosisId;
 
     private final String reason;
     private final ReferralUrgency urgency;
 
-    // Free text for now: Matibabu does not yet have a first-class facility concept TODO
-    private final String receivingFacility;
+    private final UUID receivingFacilityId;
 
     private final String department;
 
@@ -38,7 +37,7 @@ public class Referral {
             UUID diagnosisId,
             String reason,
             ReferralUrgency urgency,
-            String receivingFacility,
+            UUID receivingFacilityId,
             String department,
             Instant createdAt
     ) {
@@ -54,11 +53,7 @@ public class Referral {
         this.reason = reason;
 
         this.urgency = Objects.requireNonNull(urgency, "A referral must have an urgency");
-
-        if (receivingFacility == null || receivingFacility.isBlank()) {
-            throw new IllegalArgumentException("A referral must specify a receiving facility");
-        }
-        this.receivingFacility = receivingFacility;
+        this.receivingFacilityId = Objects.requireNonNull(receivingFacilityId, "A referral must specify a receiving facility");
 
         this.department = department;
         this.createdAt = Objects.requireNonNull(createdAt, "Created time cannot be null");
@@ -72,7 +67,7 @@ public class Referral {
             UUID diagnosisId,
             String reason,
             ReferralUrgency urgency,
-            String receivingFacility,
+            UUID receivingFacilityId,
             String department,
             Instant now
     ) {
@@ -84,12 +79,11 @@ public class Referral {
                 diagnosisId,
                 reason,
                 urgency,
-                receivingFacility,
+                receivingFacilityId,
                 department,
                 now
         );
     }
-
 
     public void complete(UUID resolvedBy, Instant resolvedAt) {
         ensurePending();
@@ -121,7 +115,7 @@ public class Referral {
             UUID diagnosisId,
             String reason,
             ReferralUrgency urgency,
-            String receivingFacility,
+            UUID receivingFacilityId,
             String department,
             ReferralStatus status,
             Instant createdAt,
@@ -130,7 +124,7 @@ public class Referral {
     ) {
         Referral referral = new Referral(
                 id, encounterId, patientId, referringClinicianId, diagnosisId,
-                reason, urgency, receivingFacility, department, createdAt
+                reason, urgency, receivingFacilityId, department, createdAt
         );
         referral.status = status;
         referral.resolvedBy = resolvedBy;
@@ -166,8 +160,8 @@ public class Referral {
         return urgency;
     }
 
-    public String getReceivingFacility() {
-        return receivingFacility;
+    public UUID getReceivingFacilityId() {
+        return receivingFacilityId;
     }
 
     public String getDepartment() {

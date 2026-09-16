@@ -13,7 +13,7 @@ public interface CreateReferralUseCase {
             UUID diagnosisId,
             String reason,
             ReferralUrgency urgency,
-            String receivingFacility,
+            UUID receivingFacilityId,
             String department
     );
 }
