@@ -22,15 +22,11 @@ public class Medicine {
     private String strength;
 
     // Reference code/line item from the Kenya Essential Medicines List.
-    // Nullable: some medicines in use locally may not be on the KEML.
+
     private String kemlCode;
 
     private boolean active;
 
-    // Provenance of the atcCode value. See AtcMappingStatus for what
-    // each state means. Bulk-seeded rows arrive as AUTO_MATCHED or
-    // NEEDS_REVIEW; only an explicit confirm/reject by an authorized
-    // reviewer moves a row to CONFIRMED or UNMAPPED.
     private AtcMappingStatus atcMappingStatus;
 
     // Which KEML edition this row was seeded/last confirmed against,
@@ -38,7 +34,7 @@ public class Medicine {
     private String kemlVersion;
 
     // Who resolved atcMappingStatus out of NEEDS_REVIEW, and when.
-    // Both null until a reviewer acts on this row.
+
     private UUID reviewedBy;
     private Instant reviewedAt;
 
@@ -106,10 +102,7 @@ public class Medicine {
         this.reviewedAt = Objects.requireNonNull(reviewedAt, "reviewedAt cannot be null");
     }
 
-    /*
-     * Retiring a medicine (e.g. withdrawn from the KEML) should not
-     * delete it, since existing treatments may still reference it.
-     */
+
     public void deactivate() {
         this.active = false;
     }

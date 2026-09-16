@@ -1,5 +1,5 @@
 
-        package com.matibabu.backend.infrastructure.persistence.encounter;
+package com.matibabu.backend.infrastructure.persistence.encounter;
 
 import com.matibabu.backend.domain.encounter.Encounter;
 import com.matibabu.backend.domain.encounter.EncounterStatus;

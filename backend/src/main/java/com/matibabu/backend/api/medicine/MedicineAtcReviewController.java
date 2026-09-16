@@ -15,14 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/*
- * Reviewing an auto-matched or unresolved KEML-to-ATC mapping is a
- * pharmacology judgment call, not a prescribing action, so this lives
- * under /api/admin rather than being exposed to every clinician: it
- * edits shared reference data (see V12's comment on the medicines
- * table), not a single patient's record. Gated to ADMIN/SUPER_ADMIN
- * the same way as the rest of /api/admin in SecurityConfig.
- */
+
 @RestController
 @RequestMapping("/api/admin/medicines")
 public class MedicineAtcReviewController {
@@ -45,12 +38,6 @@ public class MedicineAtcReviewController {
                 .toList();
     }
 
-    /*
-     * The reviewer is taken from the authenticated session, same
-     * reasoning as EncounterController.start(): who resolved a
-     * mapping must not be something the client can spoof by passing
-     * a different ID in the request body.
-     */
     @PatchMapping("/{id}/atc-mapping")
     public ResponseEntity<MedicineResponse> resolve(
             @PathVariable UUID id,

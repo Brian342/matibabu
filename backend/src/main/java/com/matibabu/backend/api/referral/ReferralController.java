@@ -32,12 +32,7 @@ public class ReferralController {
         this.cancelReferralUseCase = cancelReferralUseCase;
     }
 
-    /*
-     * The referring clinician is taken from the authenticated
-     * session, same reasoning as EncounterController.start(): who
-     * made a referral must not be something the client can spoof by
-     * passing a different ID.
-     */
+
     @PostMapping("/api/encounters/{encounterId}/referrals")
     @ResponseStatus(HttpStatus.CREATED)
     public ReferralResponse create(
@@ -77,12 +72,6 @@ public class ReferralController {
                 .toList();
     }
 
-    /*
-     * Who resolved the referral is taken from the authenticated
-     * session, not the request body, for the same reason the
-     * referring clinician is: it should not be spoofable by the
-     * client.
-     */
     @PostMapping("/api/referrals/{id}/complete")
     public ReferralResponse complete(
             @PathVariable UUID id,

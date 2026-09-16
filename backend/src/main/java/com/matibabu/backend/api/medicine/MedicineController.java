@@ -11,12 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-/*
- * Exposes the local medicine reference catalog (seeded from the
- * Kenya Essential Medicines List) so a prescriber can search for and
- * select a medicine when adding a Treatment, instead of typing a
- * drug name as free text.
- */
 @RestController
 @RequestMapping("/api/medicines")
 public class MedicineController {

@@ -40,11 +40,7 @@ public class EncounterController {
         );
     }
 
-    /*
-     * The attending clinician is taken from the authenticated
-     * session: which clinician is treating a patient must not be
-     * something the client can spoof by passing a different ID.
-     */
+
     @PostMapping("/{patientId}")
     @ResponseStatus(HttpStatus.CREATED)
     public EncounterResponse start(

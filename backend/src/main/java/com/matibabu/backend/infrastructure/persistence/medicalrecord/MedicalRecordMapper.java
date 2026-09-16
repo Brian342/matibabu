@@ -6,14 +6,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface MedicalRecordMapper {
 
-    /*
-     * Map the domain MedicalRecord to the JPA entity.
-     * MapStruct automatically maps matching fields:
-     * - id
-     * - patientId
-     * - encounterId
-     * - createdAt
-     */
+
     MedicalRecordEntity toEntity(MedicalRecord medicalRecord);
 
 
