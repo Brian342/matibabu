@@ -31,7 +31,7 @@ hub                  — the national online system, PostgreSQL (ADR-010)
 
 Both roles run the identical domain and application layers. A `hub` node exposes the same clinical APIs a `facility` node does (so a directly-connected site, e.g. a head office, can act as a facility itself) plus two additions: a synchronization ingestion API and a patient-identity-matching workflow. Almost nothing about `Patient`, `Encounter`, `MedicalRecord`, or `Referral` changes to support this — the one exception is `Encounter` gaining a `facilityId`, described below, needed once encounters from many facilities sit in one database. Otherwise the difference is entirely in wiring and in the new `synchronization` module, consistent with ADR-002 and ADR-003 keeping the domain independent of where it runs.
 
-A facility deployment is itself configured with a stable `facilityId` — a plain UUID, assigned when the facility is onboarded to the hub, carried in configuration alongside `app.node.role` (e.g. `app.facility.id`) and reused as the identity behind the facility's sync device credential (see "Sync transport" below). Matibabu does not yet have a first-class `Facility` aggregate — per ADR-07, `receivingFacility` on `Referral` remains free text for the same reason — so `facilityId` is deliberately an opaque identifier, not a foreign key into a domain concept that doesn't exist yet. Introducing a real `Facility` aggregate later can adopt this same identifier without a migration of meaning.
+A facility deployment is itself configured with a stable `facilityId`, carried in configuration alongside `app.node.role` (e.g. `app.facility.id`) and reused as the identity behind the facility's sync device credential (see "Sync transport" below). Matibabu now has a first-class `Facility` aggregate, owned by a separate team; `Referral.receivingFacilityId` and `Encounter.facilityId` both reference it as a real foreign key rather than the opaque identifier this ADR originally proposed while that aggregate didn't yet exist. Synchronization still does not design the `Facility` aggregate itself — it only depends on `facilityId` being unique and identifiable, exactly as required below in "Facility identity and audit are a dependency, not a sync concern" — the value must be issued by that facility-identity system as part of onboarding a facility, not generated locally by a facility node the first time it starts up.
 
 This matters for correctness, not just convenience: because the hub applies incoming data through the *same* application use cases a facility uses locally, every domain invariant (`ReferralNotPendingException`, encounter status validation, duplicate-phone handling, ...) is enforced identically everywhere. The hub never reconstructs state via direct SQL.
 
@@ -74,9 +74,26 @@ At the hub, a patient legitimately ends up with many `Encounter` records once th
 
 Today `Encounter` has no notion of facility at all — a deployment *is* one facility, so it's implicit. `Encounter` therefore gains a `facilityId` field, set from the deployment's configured facility identity in `Encounter.start(...)`, the same way `attendingClinicianId` is already taken from the authenticated context rather than trusted client input. It is not client-supplied and not optional for encounters started from this point forward.
 
-`MedicalRecord` and `Referral` do **not** get their own `facilityId`. Both already reference `encounterId`, so their facility is derivable transitively — `medicalRecord.encounterId → encounter.facilityId`, and likewise for a referral's originating facility — which avoids denormalizing the same fact onto every downstream aggregate. (A referral's *receiving* facility is a separate, already-existing concept — the free-text `receivingFacility` field discussed in ADR-07 — and is unaffected by this.)
+`MedicalRecord` and `Referral` do **not** get their own `facilityId`. Both already reference `encounterId`, so their originating facility is derivable transitively — `medicalRecord.encounterId → encounter.facilityId`, and likewise for a referral's originating facility — which avoids denormalizing the same fact onto every downstream aggregate. (A referral's *receiving* facility is a separate, already-existing concept — now `Referral.receivingFacilityId`, a foreign key into the `Facility` aggregate rather than the free text ADR-07 originally described — and is unaffected by this.)
 
 Existing encounters predate this field. Following the precedent `attendingClinicianId` already set for exactly this situation, `facilityId` is nullable at the persistence level for encounters recorded before it existed; those rows simply have no facility attribution unless backfilled separately when a facility's existing local database is first onboarded to the hub.
+
+### Facility identity and audit are a dependency, not a sync concern
+
+A separate team owns building Matibabu's facility model — identity issuance, licensing/accreditation, and audits carried out by the governing health organisation. This ADR does not design that model. It does, however, depend on two things from it, and states that dependency explicitly so the two efforts stay compatible:
+
+* **A unique, identifiable `facilityId`.** Every place this ADR uses `facilityId` — `Encounter.facilityId`, the outbox envelope, `PatientIdentityLink`, the sync device credential — assumes it is issued authoritatively when a facility is registered with the governing organisation, not generated locally by a facility node the first time it boots. Two different facilities must never end up with the same `facilityId`, and one facility's `facilityId` must never change once assigned, since every synced record and every patient link keys off it permanently.
+* **A facility status signal the hub can read.** Whatever the facility model represents as a facility's standing after a governing-organisation audit (active, under review, suspended, revoked — the exact states are that team's decision), the hub's `SyncIngestionService` checks it before applying incoming entries. A facility that isn't in good standing does not get to silently keep writing into the national record as if nothing had happened.
+
+How ingestion behaves on a non-active facility is a synchronization decision, even though the status itself isn't:
+
+* Entries are still **stored**, never discarded — a suspension is a governance finding about the facility, not a reason to lose clinical history that may still matter to a patient's care or to the audit itself.
+* Entries are **quarantined** rather than applied through the normal use-case/matching path: they sit visible to hub operators and to the governing organisation, but they don't get to complete a referral, link a patient, or otherwise take effect until either the facility's status is restored or someone with authority to do so reviews and releases them.
+* A facility's own local clinicians are **never affected**. Facility status is entirely a hub-side, post-sync concern; it must never propagate back to a facility node and block anyone from registering a patient, starting an encounter, or completing a referral locally. Governance acts on what a facility has already sent, not on what a facility is currently allowed to do offline.
+
+Because sync is naturally facility-scoped already (every outbox entry, every audit-log line, every `PatientIdentityLink` carries a `facilityId`), reporting *for* an audit doesn't require collecting anything synchronization doesn't already produce — it requires exposing it. A `FacilityAuditController` (hub role, under `synchronization`) gives a governing-organisation oversight role — distinct from the records-officer role that resolves patient-match candidates — a per-facility view: entries received versus applied versus quarantined, patient-match auto-link/ambiguous/manual-review rates, and sync timeliness (the gap between an entry's `createdAt` and its `syncedAt`). This is a read surface over data this ADR's audit trail (see "Standards and compliance boundary") already retains, not a new data-collection obligation.
+
+What the governing organisation actually inspects to decide a facility's standing — physical inspection, licensing renewal, data-quality thresholds, complaint investigation — is that organisation's process, not synchronization's. Synchronization's job is limited to consuming the resulting status faithfully and producing the facility-scoped activity data that process needs.
 
 ### Patient identity: the one real cross-facility conflict
 
@@ -128,7 +145,7 @@ This reduces, but does not eliminate, duplicate provisional identities — it on
 * Sync payload shapes are kept structurally close to the HL7 FHIR resources they conceptually correspond to (`Encounter`, `Condition`, `ServiceRequest`, `Patient`), even though the wire format is not literally FHIR yet. This keeps a future KHIS/DHIS2 or national health-exchange integration an addition at the boundary, consistent with ADR-07's existing position that DHIS2 concerns stay outside the core domain.
 * All sync traffic is TLS-only. The synchronization module must not log full payloads above debug level, since they carry patient-identifying clinical data — sensitive personal data under Kenya's Data Protection Act 2019.
 * `nationalId` and `birthCertificateNumber` are the two most sensitive fields in this design — a national ID number is itself sufficient to enable identity theft if it leaks — so they get treatment beyond the general PII handling above: never returned in API responses beyond what a match-review workflow strictly needs, masked (e.g. last 4 digits only) anywhere they appear in a UI or audit log entry, and excluded entirely from the general application-level audit logging used elsewhere, in favor of the dedicated match-decision audit entry below.
-* Every sync ingestion and every patient-match decision, automatic or manual, is recorded as an audit entry: facility, actor (a matching-engine rule or a named records officer), decision, and timestamp. This is required both for clinical-safety review of mistaken links and for DPA accountability.
+* Every sync ingestion and every patient-match decision, automatic or manual, is recorded as an audit entry: facility, actor (a matching-engine rule or a named records officer), decision, and timestamp. This is required both for clinical-safety review of mistaken links and for DPA accountability, and it is what makes the facility-scoped audit reporting in "Facility identity and audit are a dependency, not a sync concern" possible without collecting anything extra.
 
 ## Rationale
 
@@ -148,6 +165,8 @@ Treating patient identity as a linking problem rather than a merge problem avoid
 * Sync payload shapes are chosen to make a future FHIR/DHIS2 boundary integration additive rather than a rework.
 * When a facility is online, an advisory hub lookup at registration time can catch a returning patient before a duplicate local identity is even created, without weakening the offline-first guarantee — the lookup degrades to a no-op the moment the hub isn't reachable.
 * `Encounter.facilityId` lets the hub attribute every encounter (and, transitively, its medical record and referrals) to the facility that recorded it, without denormalizing a facility field onto every downstream aggregate.
+* A governing organisation gets a facility-scoped audit view (volume, quarantine rate, match outcomes, timeliness) for free, because it is a read surface over data synchronization already has to retain for its own idempotency and DPA obligations.
+* A facility found out of standing by governance gets its data quarantined, not silently dropped or silently accepted — and its own clinicians keep working locally regardless, since the consequence is scoped to the hub, not pushed back onto care.
 
 ### Trade-offs
 
@@ -157,6 +176,8 @@ Treating patient identity as a linking problem rather than a merge problem avoid
 * Creation-type ingestion at the hub cannot reuse the ordinary create-use-case call path unchanged, since that path always mints a fresh id; it must hydrate via each aggregate's `reconstitute(...)` factory instead, under the id the facility already generated. This is a real, if narrow, difference between "how a facility creates something" and "how the hub applies a creation it received," and needs its own tests rather than being assumed to fall out of reusing the use case layer.
 * A provisional `MasterPatientRecord` created before a match is confirmed means the "one canonical record per patient" property is only eventually true, not always true — acceptable because it never blocks care, but worth naming explicitly.
 * This ADR does not yet address the case where a referral's *receiving* facility needs to act on a referral it did not create — today's single-writer-per-aggregate assumption (Referral is only mutated by the referring facility, per ADR-07) will need revisiting once a receiving-facility workflow exists.
+* Facility identity and status are an external dependency this ADR relies on but does not build: until the separate facility-build effort delivers `facilityId` issuance and a readable status signal, `SyncIngestionService` has nothing authoritative to check a facility's standing against, and every facility is effectively treated as active. This is an explicit gap to close together with that team, not something synchronization can resolve alone.
+* Quarantining a facility's entries adds a third outcome (applied / quarantined / rejected-for-reordering) to what was previously a simpler applied-or-rejected ingestion model, and needs its own operator-facing review workflow once a facility is restored to good standing and its backlog needs releasing.
 
 ## Implementation
 
@@ -172,18 +193,22 @@ synchronization
 │   └── PatientLookupClient.java     (facility role: advisory hub lookup at registration time)
 ├── ingestion
 │   ├── SyncIngestionController.java (hub role: receives batches, acknowledges per entry)
-│   └── SyncIngestionService.java    (dispatches each entry back to the matching use case)
-└── identity
-    ├── MasterPatientRecord.java
-    ├── PatientIdentityLink.java
-    ├── PatientMatchCandidate.java
-    ├── PatientMatchingService.java
-    └── PatientLookupController.java (hub role: read-only, minimal-PII candidate search)
+│   └── SyncIngestionService.java    (dispatches each entry back to the matching use case;
+│                                      checks facility status before applying)
+├── identity
+│   ├── MasterPatientRecord.java
+│   ├── PatientIdentityLink.java
+│   ├── PatientMatchCandidate.java
+│   ├── PatientMatchingService.java
+│   └── PatientLookupController.java (hub role: read-only, minimal-PII candidate search)
+└── audit
+    ├── SyncAuditEntry.java          (facility, actor, decision, timestamp — per ingestion/match)
+    └── FacilityAuditController.java (hub role: per-facility audit view for governing-organisation oversight)
 ```
 
-Facility-side schema additions: a `sync_outbox` table (new Flyway migration) storing entries as described above; two new nullable columns on `patients` — `national_id` and `birth_certificate_number` — each with a partial unique index (unique where non-null) so a single facility's own local database cannot itself register the same document number under two different patients, which is also a first line of defense before the value ever reaches the hub's matching engine; and a new nullable `facility_id` column on `encounters`, indexed to support hub-side "all encounters for facility X" queries and the transitive facility lookups `MedicalRecord`/`Referral` rely on via `encounter_id`.
+Facility-side schema additions: a `sync_outbox` table (new Flyway migration) storing entries as described above; a new nullable `birth_certificate_number` column on `patients`, alongside a partial unique index (unique where non-null) added for it and for the already-existing but previously unindexed `national_id` column — so a single facility's own local database cannot itself register the same document number under two different patients, which is also a first line of defense before the value ever reaches the hub's matching engine; and a new nullable `facility_id` column on `encounters`, a real foreign key into `facilities` and indexed to support hub-side "all encounters for facility X" queries and the transitive facility lookups `MedicalRecord`/`Referral` rely on via `encounter_id`.
 
-Hub-only schema additions (`master_patient_records`, `patient_identity_links`, `patient_match_candidates`) are only meaningful when `app.node.role=hub`; they can be introduced via a separate Flyway migration location activated by that profile, consistent with the existing `application-local.properties` / `application-prod.properties` split. The hub indexes `master_patient_records` on `national_id` and `birth_certificate_number` to make Tier 1 lookups a direct index hit rather than a scan.
+Hub-only schema additions (`master_patient_records`, `patient_identity_links`, `patient_match_candidates`, `sync_audit_entries`) are only meaningful when `app.node.role=hub`; they can be introduced via a separate Flyway migration location activated by that profile, consistent with the existing `application-local.properties` / `application-prod.properties` split. The hub indexes `master_patient_records` on `national_id` and `birth_certificate_number` to make Tier 1 lookups a direct index hit rather than a scan, and indexes `sync_audit_entries` on `facility_id` to make `FacilityAuditController`'s per-facility view a direct lookup. `SyncIngestionService` records each ingested entry's outcome — applied or quarantined — as part of this same audit trail, keyed by `facilityId`, rather than as a separate concept; the facility-status check against the (separately owned) facility model is what decides which of the two an entry gets.
 
 ## Future Evolution
 
@@ -204,6 +229,10 @@ This ADR deliberately leaves several concerns for later decisions or implementat
 4. **Field-level demographic conflicts**
 
    If two facilities register conflicting demographic edits for the same person before either syncs (e.g. two different phone numbers), the initial version of this design surfaces that as an ordinary ambiguous-match review rather than an automatic field-level merge. A dedicated merge UI can be introduced later if operational experience shows plain review isn't sufficient.
+
+5. **Finalizing the facility-identity and audit contract**
+
+   "Facility identity and audit are a dependency, not a sync concern" describes what synchronization needs — a unique, permanent `facilityId` and a readable status signal — without designing how the separate facility-build effort provides them. Once that model exists, this ADR's assumptions (issuance timing, the exact status values, how a status change is communicated to the hub) should be checked against its real shape and adjusted if they don't line up.
 
 ## Status
 

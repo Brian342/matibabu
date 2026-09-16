@@ -1,7 +1,6 @@
-package com.matibabu.backend.encounter;
+package com.matibabu.backend.application.encounter;
 
 import com.matibabu.backend.exception.EncounterNotFoundException;
-import com.matibabu.backend.application.encounter.GetEncounterService;
 import com.matibabu.backend.domain.encounter.Encounter;
 import com.matibabu.backend.domain.encounter.EncounterRepository;
 import com.matibabu.backend.domain.encounter.EncounterStatus;

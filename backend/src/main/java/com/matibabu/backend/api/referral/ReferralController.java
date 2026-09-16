@@ -47,7 +47,7 @@ public class ReferralController {
                         request.diagnosisId(),
                         request.reason(),
                         request.urgency(),
-                        request.receivingFacility(),
+                        request.receivingFacilityId(),
                         request.department()
                 )
         );
@@ -71,6 +71,7 @@ public class ReferralController {
                 .map(ReferralResponse::from)
                 .toList();
     }
+
 
     @PostMapping("/api/referrals/{id}/complete")
     public ReferralResponse complete(

@@ -1,13 +1,15 @@
 package com.matibabu.backend.application.referral;
 
-import com.matibabu.backend.exception.EncounterNotFoundException;
 import com.matibabu.backend.domain.encounter.Encounter;
 import com.matibabu.backend.domain.encounter.EncounterRepository;
+import com.matibabu.backend.domain.facility.FacilityRepository;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecord;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecordRepository;
 import com.matibabu.backend.domain.referral.Referral;
 import com.matibabu.backend.domain.referral.ReferralRepository;
 import com.matibabu.backend.domain.referral.ReferralUrgency;
+import com.matibabu.backend.exception.EncounterNotFoundException;
+import com.matibabu.backend.exception.FacilityNotFoundException;
 import com.matibabu.backend.exception.InvalidDiagnosisReferenceException;
 import org.springframework.stereotype.Service;
 
@@ -20,15 +22,18 @@ public class CreateReferralService implements CreateReferralUseCase {
     private final ReferralRepository referralRepository;
     private final EncounterRepository encounterRepository;
     private final MedicalRecordRepository medicalRecordRepository;
+    private final FacilityRepository facilityRepository;
 
     public CreateReferralService(
             ReferralRepository referralRepository,
             EncounterRepository encounterRepository,
-            MedicalRecordRepository medicalRecordRepository
+            MedicalRecordRepository medicalRecordRepository,
+            FacilityRepository facilityRepository
     ) {
         this.referralRepository = referralRepository;
         this.encounterRepository = encounterRepository;
         this.medicalRecordRepository = medicalRecordRepository;
+        this.facilityRepository = facilityRepository;
     }
 
     @Override
@@ -38,20 +43,15 @@ public class CreateReferralService implements CreateReferralUseCase {
             UUID diagnosisId,
             String reason,
             ReferralUrgency urgency,
-            String receivingFacility,
+            UUID receivingFacilityId,
             String department
     ) {
         Encounter encounter = encounterRepository.findById(encounterId)
                 .orElseThrow(() -> new EncounterNotFoundException(encounterId));
 
-        /*
-         * If a diagnosis was given, it must actually belong to this
-         * encounter's medical record — otherwise nothing stops a
-         * referral from linking to an unrelated patient's diagnosis
-         * by mistake. This check belongs here, not in the Referral
-         * domain object, since Referral has no reference to
-         * MedicalRecord to verify against.
-         */
+        facilityRepository.findById(receivingFacilityId)
+                .orElseThrow(() -> new FacilityNotFoundException(receivingFacilityId));
+
         if (diagnosisId != null) {
             MedicalRecord medicalRecord = medicalRecordRepository.findByEncounterId(encounterId)
                     .orElseThrow(() -> new InvalidDiagnosisReferenceException(diagnosisId, encounterId));
@@ -71,7 +71,7 @@ public class CreateReferralService implements CreateReferralUseCase {
                 diagnosisId,
                 reason,
                 urgency,
-                receivingFacility,
+                receivingFacilityId,
                 department,
                 Instant.now()
         );
