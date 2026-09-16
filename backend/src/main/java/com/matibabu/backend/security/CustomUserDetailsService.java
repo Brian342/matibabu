@@ -1,6 +1,6 @@
 package com.matibabu.backend.security;
 
-import com.matibabu.backend.api.exception.UserNotFoundException;
+import com.matibabu.backend.exception.UserNotFoundException;
 import com.matibabu.backend.security.entity.Clinician;
 import com.matibabu.backend.security.repository.ClinicianRepository;
 import org.springframework.security.core.userdetails.UserDetails;

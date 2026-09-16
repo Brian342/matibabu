@@ -1,6 +1,6 @@
 package com.matibabu.backend.application.referral;
 
-import com.matibabu.backend.application.encounter.EncounterNotFoundException;
+import com.matibabu.backend.exception.EncounterNotFoundException;
 import com.matibabu.backend.domain.encounter.Encounter;
 import com.matibabu.backend.domain.encounter.EncounterRepository;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecord;
@@ -8,6 +8,7 @@ import com.matibabu.backend.domain.medicalrecord.MedicalRecordRepository;
 import com.matibabu.backend.domain.referral.Referral;
 import com.matibabu.backend.domain.referral.ReferralRepository;
 import com.matibabu.backend.domain.referral.ReferralUrgency;
+import com.matibabu.backend.exception.InvalidDiagnosisReferenceException;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;

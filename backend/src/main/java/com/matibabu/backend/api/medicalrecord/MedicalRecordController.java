@@ -6,7 +6,7 @@ import com.matibabu.backend.application.medicalrecord.AddTreatment;
 import com.matibabu.backend.application.medicalrecord.AddVital;
 import com.matibabu.backend.application.medicalrecord.CreateMedicalRecordUseCase;
 import com.matibabu.backend.application.medicalrecord.GetMedicalRecordUseCase;
-import com.matibabu.backend.application.medicalrecord.MedicalRecordNotFoundException;
+import com.matibabu.backend.exception.MedicalRecordNotFoundException;
 import com.matibabu.backend.domain.medicalrecord.DiagnosisType;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecord;
 import com.matibabu.backend.domain.medicalrecord.VitalType;

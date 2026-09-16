@@ -1,7 +1,7 @@
 package com.matibabu.backend.security.services;
 
-import com.matibabu.backend.api.exception.ClinicianAlreadyExistsException;
-import com.matibabu.backend.api.exception.UserNotFoundException;
+import com.matibabu.backend.exception.ClinicianAlreadyExistsException;
+import com.matibabu.backend.exception.UserNotFoundException;
 import com.matibabu.backend.security.entity.Clinician;
 import com.matibabu.backend.security.repository.ClinicianRepository;
 import com.matibabu.backend.security.dto.RegistrationRequest;

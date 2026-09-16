@@ -6,15 +6,6 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-/*
- * A referral to another facility/specialty, made in the context of
- * an encounter. Modeled as its own aggregate (own repository, own
- * identity) rather than nested inside MedicalRecord, for the same
- * reasons Encounter is kept independent of Patient: a referral has
- * its own lifecycle that can outlive the encounter that created it,
- * and its own queries ("referrals still pending") that don't belong
- * to a single clinical record.
- */
 public class Referral {
 
     private final UUID id;
@@ -23,16 +14,13 @@ public class Referral {
     private final UUID referringClinicianId;
 
     // The diagnosis that prompted this referral, if any. Optional:
-    // a referral can legitimately precede a confirmed diagnosis
-    // (e.g. "refer to radiology to establish a diagnosis").
+
     private final UUID diagnosisId;
 
     private final String reason;
     private final ReferralUrgency urgency;
 
-    // Free text for now: Matibabu does not yet have a first-class
-    // Facility concept. Expected to become a reference once one
-    // exists.
+    // Free text for now: Matibabu does not yet have a first-class facility concept TODO
     private final String receivingFacility;
 
     private final String department;
@@ -102,14 +90,7 @@ public class Referral {
         );
     }
 
-    /*
-     * Marks this referral as completed. "Complete" deliberately
-     * doesn't distinguish who did it (referring clinician today;
-     * possibly a receiving-side actor once that workflow exists) —
-     * the domain only cares that the loop was closed, by whom, and
-     * when. Authorization for who is allowed to call this lives at
-     * the API/security layer, not here.
-     */
+
     public void complete(UUID resolvedBy, Instant resolvedAt) {
         ensurePending();
         this.status = ReferralStatus.COMPLETED;

@@ -2,6 +2,7 @@ package com.matibabu.backend.application.referral;
 
 import com.matibabu.backend.domain.referral.Referral;
 import com.matibabu.backend.domain.referral.ReferralRepository;
+import com.matibabu.backend.exception.ReferralNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

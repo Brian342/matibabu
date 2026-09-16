@@ -3,6 +3,8 @@ package com.matibabu.backend.application.patient;
 import com.matibabu.backend.domain.patient.Gender;
 import com.matibabu.backend.domain.patient.Patient;
 import com.matibabu.backend.domain.patient.PatientRepository;
+import com.matibabu.backend.exception.DuplicatePhoneNumberException;
+import com.matibabu.backend.exception.PatientNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

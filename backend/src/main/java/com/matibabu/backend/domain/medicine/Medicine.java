@@ -11,7 +11,7 @@ public class Medicine {
     private String name;
     private String genericName;
 
-    // WHO ATC classification code, e.g. "J01CA04" for amoxicillin.
+
     // Nullable: not every locally-used medicine has been mapped yet.
     private String atcCode;
 
@@ -34,7 +34,6 @@ public class Medicine {
     private AtcMappingStatus atcMappingStatus;
 
     // Which KEML edition this row was seeded/last confirmed against,
-    // e.g. "KEML 2023". Nullable for medicines added outside a KEML
 
     private String kemlVersion;
 
@@ -91,10 +90,7 @@ public class Medicine {
         return medicine;
     }
 
-    /*
-     * A reviewer (pharmacist/admin) confirms the correct ATC code for
-     * a medicine that was previously AUTO_MATCHED or NEEDS_REVIEW.
-     */
+
     public void confirmAtcCode(String atcCode, UUID reviewedBy, Instant reviewedAt) {
         this.atcCode = Objects.requireNonNull(atcCode, "atcCode cannot be null when confirming a mapping");
         this.atcMappingStatus = AtcMappingStatus.CONFIRMED;
@@ -102,11 +98,7 @@ public class Medicine {
         this.reviewedAt = Objects.requireNonNull(reviewedAt, "reviewedAt cannot be null");
     }
 
-    /*
-     * A reviewer determines no ATC code genuinely applies (e.g. some
-     * fixed-dose combinations have no assigned ATC5 code) rather than
-     * leaving the row sitting in NEEDS_REVIEW indefinitely.
-     */
+
     public void markUnmapped(UUID reviewedBy, Instant reviewedAt) {
         this.atcCode = null;
         this.atcMappingStatus = AtcMappingStatus.UNMAPPED;

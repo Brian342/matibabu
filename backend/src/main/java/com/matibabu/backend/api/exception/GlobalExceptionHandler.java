@@ -1,9 +1,9 @@
 package com.matibabu.backend.api.exception;
 
-import com.matibabu.backend.application.encounter.EncounterNotFoundException;
-import com.matibabu.backend.application.medicalrecord.MedicalRecordNotFoundException;
-import com.matibabu.backend.application.patient.DuplicatePhoneNumberException;
-import com.matibabu.backend.application.patient.PatientNotFoundException;
+import com.matibabu.backend.exception.EncounterNotFoundException;
+import com.matibabu.backend.exception.MedicalRecordNotFoundException;
+import com.matibabu.backend.exception.DuplicatePhoneNumberException;
+import com.matibabu.backend.exception.PatientNotFoundException;
 import com.matibabu.backend.domain.encounter.EncounterNotActiveException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;

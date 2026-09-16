@@ -1,4 +1,4 @@
-package com.matibabu.backend.application.medicalrecord;
+package com.matibabu.backend.exception;
 
 import java.util.UUID;
 

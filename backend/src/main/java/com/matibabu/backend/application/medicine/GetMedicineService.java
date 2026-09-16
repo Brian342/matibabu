@@ -2,6 +2,7 @@ package com.matibabu.backend.application.medicine;
 
 import com.matibabu.backend.domain.medicine.Medicine;
 import com.matibabu.backend.domain.medicine.MedicineRepository;
+import com.matibabu.backend.exception.MedicineNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;

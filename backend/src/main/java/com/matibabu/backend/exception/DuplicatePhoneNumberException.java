@@ -1,4 +1,4 @@
-package com.matibabu.backend.application.patient;
+package com.matibabu.backend.exception;
 
 public class DuplicatePhoneNumberException extends RuntimeException {
 

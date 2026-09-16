@@ -2,6 +2,7 @@ package com.matibabu.backend.application.patient;
 
 import com.matibabu.backend.domain.patient.Patient;
 import com.matibabu.backend.domain.patient.PatientRepository;
+import com.matibabu.backend.exception.PatientNotFoundException;
 
 import java.util.UUID;
 

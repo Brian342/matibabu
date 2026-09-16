@@ -1,6 +1,6 @@
 package com.matibabu.backend.application.medicalrecord;
 
-import com.matibabu.backend.application.encounter.EncounterNotFoundException;
+import com.matibabu.backend.exception.EncounterNotFoundException;
 import com.matibabu.backend.domain.encounter.Encounter;
 import com.matibabu.backend.domain.encounter.EncounterRepository;
 import com.matibabu.backend.domain.medicalrecord.MedicalRecord;
