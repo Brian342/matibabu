@@ -31,6 +31,12 @@ public class PatientEntity {
 
     private String address;
 
+    @Column(name = "national_id")
+    private String nationalId;
+
+    @Column(name = "birth_certificate_number")
+    private String birthCertificateNumber;
+
     private Instant createdAt;
 
     private Instant updatedAt;
@@ -93,6 +99,22 @@ public class PatientEntity {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getNationalId() {
+        return nationalId;
+    }
+
+    public void setNationalId(String nationalId) {
+        this.nationalId = nationalId;
+    }
+
+    public String getBirthCertificateNumber() {
+        return birthCertificateNumber;
+    }
+
+    public void setBirthCertificateNumber(String birthCertificateNumber) {
+        this.birthCertificateNumber = birthCertificateNumber;
     }
 
     public Instant getCreatedAt() {

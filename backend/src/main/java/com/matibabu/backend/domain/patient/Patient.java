@@ -15,6 +15,14 @@ public class Patient {
     private Gender gender;
     private String phoneNumber;
     private String address;
+
+    // Identity documents. Both are nullable: a patient may be a
+    // newborn with neither yet issued, or registered before staff
+    // capture the document. Neither is required to register a
+    // patient. See docs/decisions/ADR-08-synchronization.md.
+    private String nationalId;
+    private String birthCertificateNumber;
+
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -24,7 +32,9 @@ public class Patient {
             LocalDate dateOfBirth,
             Gender gender,
             String phoneNumber,
-            String address
+            String address,
+            String nationalId,
+            String birthCertificateNumber
     ) {
         this.uuid = UuidCreator.getTimeOrderedEpoch();
         this.firstName = firstName;
@@ -33,6 +43,8 @@ public class Patient {
         this.gender = gender;
         this.phoneNumber = phoneNumber;
         this.address = address;
+        this.nationalId = nationalId;
+        this.birthCertificateNumber = birthCertificateNumber;
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
     }
@@ -48,6 +60,8 @@ public class Patient {
             Gender gender,
             String phoneNumber,
             String address,
+            String nationalId,
+            String birthCertificateNumber,
             Instant createdAt,
             Instant updatedAt
     ) {
@@ -57,7 +71,9 @@ public class Patient {
                 dateOfBirth,
                 gender,
                 phoneNumber,
-                address
+                address,
+                nationalId,
+                birthCertificateNumber
         );
 
         patient.uuid = uuid;
@@ -73,7 +89,9 @@ public class Patient {
             LocalDate dateOfBirth,
             Gender gender,
             String phoneNumber,
-            String address
+            String address,
+            String nationalId,
+            String birthCertificateNumber
     ) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -81,6 +99,8 @@ public class Patient {
         this.gender = gender;
         this.phoneNumber = phoneNumber;
         this.address = address;
+        this.nationalId = nationalId;
+        this.birthCertificateNumber = birthCertificateNumber;
         this.updatedAt = Instant.now();
     }
 
@@ -112,6 +132,14 @@ public class Patient {
 
     public String getAddress() {
         return address;
+    }
+
+    public String getNationalId() {
+        return nationalId;
+    }
+
+    public String getBirthCertificateNumber() {
+        return birthCertificateNumber;
     }
 
     public Instant getCreatedAt() {

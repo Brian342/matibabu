@@ -22,6 +22,8 @@ public interface PatientMapper {
                 entity.getGender(),
                 entity.getPhoneNumber(),
                 entity.getAddress(),
+                entity.getNationalId(),
+                entity.getBirthCertificateNumber(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

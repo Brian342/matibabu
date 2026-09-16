@@ -22,7 +22,9 @@ public class RegisterPatientService implements RegisterPatientUseCase {
             LocalDate dateOfBirth,
             Gender gender,
             String phoneNumber,
-            String address
+            String address,
+            String nationalId,
+            String birthCertificateNumber
     ) {
         if (patientRepository.existsByPhoneNumber(phoneNumber)) {
             throw new DuplicatePhoneNumberException(phoneNumber);
@@ -34,7 +36,9 @@ public class RegisterPatientService implements RegisterPatientUseCase {
                 dateOfBirth,
                 gender,
                 phoneNumber,
-                address
+                address,
+                nationalId,
+                birthCertificateNumber
         );
 
         return patientRepository.save(patient);

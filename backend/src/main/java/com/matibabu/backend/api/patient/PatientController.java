@@ -55,7 +55,9 @@ public class PatientController {
                         request.dateOfBirth(),
                         request.gender(),
                         request.phoneNumber(),
-                        request.address()
+                        request.address(),
+                        request.nationalId(),
+                        request.birthCertificateNumber()
                 )
         );
     }
@@ -88,7 +90,9 @@ public class PatientController {
                         request.dateOfBirth(),
                         request.gender(),
                         request.phoneNumber(),
-                        request.address()
+                        request.address(),
+                        request.nationalId(),
+                        request.birthCertificateNumber()
                 )
         );
     }

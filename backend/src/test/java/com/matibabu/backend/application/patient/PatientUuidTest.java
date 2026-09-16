@@ -18,7 +18,9 @@ class PatientUuidTest {
                 LocalDate.of(2000, 1, 1),
                 Gender.MALE,
                 "0700000000",
-                "Nairobi"
+                "Nairobi",
+                null,
+                null
         );
 
         assertEquals(7, patient.getId().version());
